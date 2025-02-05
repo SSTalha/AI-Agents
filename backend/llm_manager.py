@@ -1,9 +1,14 @@
-from langchain.llms import GoogleGenerativeAI, OpenAI # type: ignore
-from langchain.prompts import PromptTemplate # type: ignore
-from langchain.chains import LLMChain # type: ignore
+from enums import LLM_Type  # Changed from relative to absolute import
+from langchain_google_genai import GoogleGenerativeAI  # type: ignore
+from langchain.prompts import PromptTemplate  # type: ignore
+from langchain.chains import LLMChain  # type: ignore
 from typing import Optional, List, Union
 import os
-from .enums import LLM_Type
+from langchain_openai import OpenAI # type: ignore
+from dotenv import load_dotenv # type: ignore
+
+load_dotenv()
+
 
 class LLM:
     def __init__(self, llm_type: str):

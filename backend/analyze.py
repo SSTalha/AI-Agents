@@ -1,8 +1,10 @@
 from llm_manager import LLM
 from enums import LLM_Type
 import json
+import re
 
-def analyze(post_content: str):
+
+def analyze_content(post_content: str):
   prompt =  [
           {
             "system": """
@@ -14,19 +16,13 @@ def analyze(post_content: str):
             - **Score 7-8**: Like and Comment if the post asks a question, sparks a discussion, is emotionally engaging (e.g., sad or inspiring), or provides an opportunity to add value through a reply.
             - **Score 9-10**: Like and Share if the post is highly valuable, insightful, humorous, or beneficial to the user's network. If it is also discussion-worthy, add a Comment.
             
-            Your response should follow this structured format:
-            - If Like is chosen: `{ "like": true }`
-            - If Comment is chosen: `{ "comment": true, "content": "Your comment text here" }`
-            - If Share is chosen: `{ "share": true }`
-            - If multiple actions are chosen, return a combination of the above.
+            IMPORTANT: Always respond in STRICT JSON format. Do NOT include any text outside of the JSON.
             
-            **Response Structure for Multiple Actions:**
-            - If Like and Comment: `{ "like": true, "comment": true, "content": "Your comment text here" }`
-            - If Like and Share: `{ "like": true, "share": true }`
-            - If Comment and Share: `{ "comment": true, "content": "Your comment text here", "share": true }`
-            - If Like, Comment, and Share: `{ "like": true, "comment": true, "content": "Your comment text here", "share": true }`
-            
-            Provide a brief reason for your decision if a comment is suggested.
+            Response format examples:
+            - `{"like": true}`
+            - `{"comment": true, "content": "Great insight!"}`
+            - `{"like": true, "share": true}`
+            - `{"like": true, "comment": true, "content": "Interesting perspective!", "share": true}`
             """
         },
            {
@@ -37,17 +33,29 @@ def analyze(post_content: str):
             {post_content}
             ---
             
-            Based on the content, should I like, comment, or share this post? Provide a structured response according to the instructions.
+            Based on the content, should I like, comment, or share this post? Provide a structured JSON response.
             """
         }
     ]
 
-  llm =  LLM(LLM_Type.GPT_4o)
+  llm =  LLM(LLM_Type.GEMINI_FLASH_8b)
   response = llm.ask(prompt)
+  # print(response)
+
+  # Clean up the response to ensure it's valid JSON
+  def clean_json(text):
+    json_match = re.search(r'\{.*\}', text, re.DOTALL)
+    if json_match:
+      return json_match.group(0)
+    return text
 
   try:
-    return json.loads(response)
+    cleaned_response = clean_json(response)
+    return json.loads(cleaned_response)
 
-  except Exception as e:
-    raise e
+  except json.JSONDecodeError as e:
+    # If JSON parsing fails, provide a default response
+    print(f"JSON Parsing Error: {e}")
+    print(f"Original Response: {response}")
+    return {"like": True}  # Default safe action
 
