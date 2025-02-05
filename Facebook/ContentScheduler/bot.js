@@ -1,11 +1,13 @@
 const { chromium } = require('playwright');
 const schedule = require('node-schedule');
+const fs = require('fs').promises;
+const path = require('path');
 
 const EMAIL = "alirizwan921111@gmail.com";
 const PASSWORD = "haroon@8523";
 
 const POST_CONTENT = "Hey my name is ali rizwan and i want to be a software engineer";
-const POST_TIME = "2025-02-02 21:00";
+const POST_TIME = "2025-02-02 20:33";
 
 const humanDelay = async () => {
     const delay = Math.floor(Math.random() * (8000 - 3000) + 3000);
@@ -57,6 +59,15 @@ async function loginToFacebook(page) {
     }
 }
 
+async function checkStorageState() {
+    try {
+        await fs.access('facebook.json');
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 async function postToFacebook(browser, page) {
     console.log("Creating scheduled post...");
 
@@ -91,18 +102,55 @@ async function postToFacebook(browser, page) {
 }
 
 (async () => {
-    const browser = await chromium.launch({ headless: false });
-    const context = await browser.newContext();
+    const browser = await chromium.launch({
+        headless: false,
+        channel: 'chrome',
+    });
+
+    let context;
+    const hasStorageState = await checkStorageState();
+
+    if (hasStorageState) {
+        console.log("Found existing session, trying to restore...");
+        context = await browser.newContext({
+            storageState: 'facebook.json'
+        });
+    } else {
+        console.log("No existing session found, creating new context...");
+        context = await browser.newContext();
+    }
+
     const page = await context.newPage();
     
     console.log("Starting Facebook Bot...");
     await page.goto('https://www.facebook.com');
-    await loginToFacebook(page);
     
-    console.log(`Logged in successfully. Waiting for scheduled post time: ${POST_TIME}`);
-    
-    schedule.scheduleJob(POST_TIME, async function () {
-        console.log(`It's time! Creating scheduled post...`);
-        await postToFacebook(browser, page);
-    });
+    try {
+        // Check login status
+        const isLoggedIn = await page.waitForSelector('input[data-testid="royal-email"]', { timeout: 5000 })
+            .then(() => false)
+            .catch(() => true);
+
+        if (!isLoggedIn) {
+            console.log("Not logged in, attempting login...");
+            await loginToFacebook(page);
+            
+            // Save the storage state after successful login
+            console.log("Saving session state...");
+            await context.storageState({ path: 'facebook.json' });
+        } else {
+            console.log("Already logged in!");
+        }
+        
+        console.log(`Waiting for scheduled post time: ${POST_TIME}`);
+        
+        schedule.scheduleJob(POST_TIME, async function () {
+            console.log(`It's time! Creating scheduled post...`);
+            await postToFacebook(browser, page);
+        });
+    } catch (error) {
+        console.error("Error:", error);
+        await browser.close();
+        process.exit(1);
+    }
 })();
