@@ -15,7 +15,7 @@ function randomDelay(min = 1000, max = 3000) {
 
 async function postImageToInstagram(imagePath) {
 
-    const userDataDir = 'C:\\Users\\Talha\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 17';
+    const userDataDir = process.env.CHROME_PROFILE_PATH;
 
     const context = await chromium.launchPersistentContext(
         userDataDir,
@@ -40,7 +40,7 @@ async function postImageToInstagram(imagePath) {
         console.log("No session detected, performing login...");
         
         // Human-like typing for username
-        const username = process.env.INSTAGRAM_USERNAME || 'J__Paul_Brandout';
+        const username = process.env.INSTAGRAM_USERNAME;
         for (const char of username) {
             await page.type(usernameSelector, char, { delay: Math.random() * 100 + 150 }); // 150-250ms per keystroke
             await randomDelay(100, 200); // Additional micro pause between characters
@@ -48,7 +48,7 @@ async function postImageToInstagram(imagePath) {
         await randomDelay(1000, 1500); // Natural pause after typing the username
         
         // Human-like typing for password
-        const password = process.env.INSTAGRAM_PASSWORD || 'limo@insta.acc';
+        const password = process.env.INSTAGRAM_PASSWORD;
         await page.click(passwordSelector); // Focus on the password field
         for (const char of password) {
             await page.type(passwordSelector, char, { delay: Math.random() * 100 + 150 });
