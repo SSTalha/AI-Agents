@@ -6,12 +6,13 @@ import uvicorn  # type: ignore
 app = FastAPI()
 
 class PostContent(BaseModel):
+    platform: str
     post_content: str
 
 @app.post("/analyze-post")
 async def analyze_post(content: PostContent):
     try:
-        result = analyze_content(content.post_content)
+        result = analyze_content(content.platform, content.post_content)
         
         return {
             "status": "success",
