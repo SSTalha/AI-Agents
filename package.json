@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^16.4.7",
     "node-schedule": "^2.1.1",
     "playwright": "^1.50.1"
   }
