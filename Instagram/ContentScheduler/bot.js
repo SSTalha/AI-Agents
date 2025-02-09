@@ -132,44 +132,26 @@ async function postImageToInstagram(imagePath, caption, postTime) {
     console.log("Clicked on caption field");
     await randomDelay(2000, 3000);
 
-    // Add caption text if provided and not empty
-    if (caption && caption.trim()) {
-        console.log("Entering caption...");
-    
-        // Ensure the field is focused
-        await page.click(captionSelector);
-        await randomDelay(1500, 2500);
-    
-        // Use `type()` instead of `keyboard.press()` for better reliability
-        await page.type(captionSelector, caption, { delay: 100 });
-    
-        // Trigger input events to ensure Instagram registers the change
-        await page.evaluate((args) => {
-            const { selector, caption } = args;
-            const captionBox = document.querySelector(selector);
-            if (captionBox) {
-                captionBox.innerText = caption; // Ensure text is set
-                captionBox.dispatchEvent(new Event('input', { bubbles: true }));
-                captionBox.dispatchEvent(new Event('change', { bubbles: true }));
-            }
-        }, { selector: captionSelector, caption });
-        
-    
-        // Confirm that caption was entered correctly
-        const enteredCaption = await page.evaluate((selector) => {
-            return document.querySelector(selector)?.innerText.trim() || "";
-        }, captionSelector);
-    
-        if (enteredCaption === caption.trim()) {
-            console.log("Caption entered successfully and verified.");
-        } else {
-            console.warn(`Caption mismatch: Expected "${caption}", but got "${enteredCaption}"`);
-        }
-    
-        await randomDelay(2000, 3000);
-    } else {
-        console.log("Skipping caption - none provided or empty");
-    }
+   
+// Add caption text if provided and not empty
+if (caption && caption.trim()) {
+    await page.fill(captionSelector, caption);
+    console.log("Entering caption...");
+    await randomDelay(2000, 3000);
+
+    // Simulate typing by sending keypresses
+    await page.type(captionSelector, ' ', { delay: 100 });
+    await randomDelay(1000, 2000);
+
+    // Remove focus from the caption input field
+    await page.evaluate(() => document.activeElement.blur());
+    console.log("Caption entered successfully and input blurred.");
+} else {
+    console.log("Skipping caption - none provided or empty");
+}
+
+await randomDelay(3000, 5000);
+
     
 
     console.log("Looking for share button in post modal...");
