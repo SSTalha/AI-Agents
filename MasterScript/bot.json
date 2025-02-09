@@ -1,0 +1,20 @@
+{
+    "facebook": {
+      "ContentScheduler": {
+        "enabled": false,
+        "config": {
+          "postTime": "2025-02-02 20:33",
+          "postContent": "Scheduled Facebook post content"
+        }
+      }
+    },
+    "instagram": {
+      "ContentScheduler": {
+        "enabled": true,
+        "config": {
+          "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg",
+          "postTime": "2025-02-09 4:25"
+         }
+      }
+    }
+  }
