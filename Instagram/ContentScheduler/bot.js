@@ -1,7 +1,9 @@
 const path = require('path');
 const { chromium } = require('playwright');
 
-const CHROME_PROFILE_PATH = 'C:\\Users\\Haroon\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 2';
+// const CHROME_PROFILE_PATH = 'C:\\Users\\Haroon\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 2';
+const CHROME_PROFILE_PATH = 'C:\\Users\\Talha\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 17';
+
 
 /**
  * Returns a promise that resolves after a random delay.
@@ -12,8 +14,22 @@ function randomDelay(min = 3000, max = 8000) {
     return new Promise(resolve => setTimeout(resolve, delay));
 }
 
-async function postImageToInstagram(imagePath) {
+async function postImageToInstagram(imagePath, caption, postTime) {
     console.log("Using Chrome profile:", CHROME_PROFILE_PATH);
+    
+    // Parse the post time
+    const postDateTime = new Date(postTime);
+    const now = new Date();
+
+    // Calculate the delay until the post time
+    const delayUntilPost = postDateTime - now;
+
+    if (delayUntilPost > 0) {
+        console.log(`Post scheduled for ${postDateTime}. Waiting ${delayUntilPost / 1000} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, delayUntilPost));
+    } else {
+        console.log(`Post time ${postDateTime} has already passed. Posting immediately.`);
+    }
     
     const context = await chromium.launchPersistentContext(
         CHROME_PROFILE_PATH,
@@ -157,4 +173,28 @@ async function postImageToInstagram(imagePath) {
     await context.close();
 }
 
-module.exports = { postImageToInstagram };
+// Main function to run the bot
+async function runBot() {
+    const botConfig = JSON.parse(process.env.BOT_CONFIG || '{}');
+    const { imagePath, caption, postTime } = botConfig;
+
+    // Validate required configuration
+    if (!imagePath) {
+        console.error("No image path provided in configuration.");
+        return;
+    }
+
+    // Log the configuration for debugging
+    console.log("Bot Configuration:", {
+        imagePath,
+        caption,
+        postTime
+    });
+
+    // Call the post function with extracted config
+    await postImageToInstagram(imagePath, caption, postTime);
+}
+
+runBot().catch(err => {
+    console.error("Error running Instagram bot:", err);
+});
