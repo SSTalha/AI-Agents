@@ -1,8 +1,8 @@
 const path = require('path');
 const { chromium } = require('playwright');
 
-// const CHROME_PROFILE_PATH = 'C:\\Users\\Haroon\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 2';
-const CHROME_PROFILE_PATH = 'C:\\Users\\Talha\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 17';
+const CHROME_PROFILE_PATH = 'C:\\Users\\Haroon\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 2';
+// const CHROME_PROFILE_PATH = 'C:\\Users\\Talha\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 17';
 
 
 /**
@@ -54,19 +54,10 @@ async function postImageToInstagram(imagePath, caption, postTime) {
     if (await page.$(usernameSelector)) {
         console.log("No session detected, performing login...");
         
-        const username = process.env.INSTAGRAM_USERNAME;
-        for (const char of username) {
-            await page.type(usernameSelector, char, { delay: Math.random() * 100 + 150 });
-            await randomDelay(300, 550);
-        }
+        await page.fill(usernameSelector, process.env.INSTAGRAM_USERNAME);
         await randomDelay(3000, 5500);
         
-        const password = process.env.INSTAGRAM_PASSWORD;
-        await page.click(passwordSelector);
-        for (const char of password) {
-            await page.type(passwordSelector, char, { delay: Math.random() * 100 + 150 });
-            await randomDelay(300, 550);
-        }
+        await page.fill(passwordSelector, process.env.INSTAGRAM_PASSWORD);
         await randomDelay(3000, 5500);
         
         await page.click(loginButtonSelector);
@@ -141,6 +132,46 @@ async function postImageToInstagram(imagePath, caption, postTime) {
     console.log("Clicked on caption field");
     await randomDelay(2000, 3000);
 
+    // Add caption text if provided and not empty
+    if (caption && caption.trim()) {
+        console.log("Entering caption...");
+    
+        // Ensure the field is focused
+        await page.click(captionSelector);
+        await randomDelay(1500, 2500);
+    
+        // Use `type()` instead of `keyboard.press()` for better reliability
+        await page.type(captionSelector, caption, { delay: 100 });
+    
+        // Trigger input events to ensure Instagram registers the change
+        await page.evaluate((args) => {
+            const { selector, caption } = args;
+            const captionBox = document.querySelector(selector);
+            if (captionBox) {
+                captionBox.innerText = caption; // Ensure text is set
+                captionBox.dispatchEvent(new Event('input', { bubbles: true }));
+                captionBox.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        }, { selector: captionSelector, caption });
+        
+    
+        // Confirm that caption was entered correctly
+        const enteredCaption = await page.evaluate((selector) => {
+            return document.querySelector(selector)?.innerText.trim() || "";
+        }, captionSelector);
+    
+        if (enteredCaption === caption.trim()) {
+            console.log("Caption entered successfully and verified.");
+        } else {
+            console.warn(`Caption mismatch: Expected "${caption}", but got "${enteredCaption}"`);
+        }
+    
+        await randomDelay(2000, 3000);
+    } else {
+        console.log("Skipping caption - none provided or empty");
+    }
+    
+
     console.log("Looking for share button in post modal...");
     await page.evaluate(() => {
         const headings = Array.from(document.querySelectorAll('div[role="heading"]'));
@@ -187,7 +218,7 @@ async function runBot() {
     // Log the configuration for debugging
     console.log("Bot Configuration:", {
         imagePath,
-        caption,
+        caption: caption && caption.trim() ? caption : 'Caption skipped',
         postTime
     });
 
