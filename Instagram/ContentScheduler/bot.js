@@ -14,8 +14,10 @@ function randomDelay(min = 3000, max = 8000) {
     return new Promise(resolve => setTimeout(resolve, delay));
 }
 
-async function postImageToInstagram(imagePath, caption, postTime) {
+async function postImageToInstagram(imagePath, caption, postTime, username, password) {
     console.log("Using Chrome profile:", CHROME_PROFILE_PATH);
+    console.log("username", username);
+    console.log("password", password);
     
     // Parse the post time
     const postDateTime = new Date(postTime);
@@ -54,10 +56,10 @@ async function postImageToInstagram(imagePath, caption, postTime) {
     if (await page.$(usernameSelector)) {
         console.log("No session detected, performing login...");
         
-        await page.fill(usernameSelector, process.env.INSTAGRAM_USERNAME);
+        await page.fill(usernameSelector, username);
         await randomDelay(3000, 5500);
         
-        await page.fill(passwordSelector, process.env.INSTAGRAM_PASSWORD);
+        await page.fill(passwordSelector, password);
         await randomDelay(3000, 5500);
         
         await page.click(loginButtonSelector);
@@ -189,11 +191,20 @@ await randomDelay(3000, 5000);
 // Main function to run the bot
 async function runBot() {
     const botConfig = JSON.parse(process.env.BOT_CONFIG || '{}');
-    const { imagePath, caption, postTime } = botConfig;
+    const { config, credentials } = botConfig;
+    
+    if (!credentials || !credentials.username || !credentials.password) {
+        console.error("Missing Instagram credentials in configuration.");
+        return;
+    }
+
+    // Destructure the nested config object
+    const { imagePath, caption, postTime } = config || {};
 
     // Validate required configuration
     if (!imagePath) {
         console.error("No image path provided in configuration.");
+        console.log("Received botConfig:", JSON.stringify(botConfig, null, 2)); // Debug log
         return;
     }
 
@@ -205,7 +216,7 @@ async function runBot() {
     });
 
     // Call the post function with extracted config
-    await postImageToInstagram(imagePath, caption, postTime);
+    await postImageToInstagram(imagePath, caption, postTime, credentials.username, credentials.password);
 }
 
 runBot().catch(err => {

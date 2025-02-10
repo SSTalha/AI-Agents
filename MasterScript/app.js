@@ -7,10 +7,8 @@ const { fork } = require('child_process');
 const path = require('path');
 const config = require('./bot.json');
 
-// Queue to hold bot tasks
 const botQueue = [];
 
-// Function to run bots sequentially
 function runNextBot() {
     if (botQueue.length > 0) {
         const { botPath, botConfig, botName } = botQueue.shift();
@@ -19,11 +17,10 @@ function runNextBot() {
         const child = fork(botPath, [], {
             env: {
                 ...process.env,
-                BOT_CONFIG: JSON.stringify(botConfig.config || {})
+                BOT_CONFIG: JSON.stringify(botConfig)
             }
         });
 
-        // When the bot process exits, run the next bot in the queue
         child.on('exit', (code) => {
             console.log(`${botName} bot exited with code ${code}`);
             runNextBot();
@@ -33,11 +30,13 @@ function runNextBot() {
     }
 }
 
-// Add bots to the queue based on configuration
 if (config.facebook && config.facebook.ContentScheduler && config.facebook.ContentScheduler.enabled) {
     botQueue.push({
         botPath: path.join(__dirname, '../Facebook/ContentScheduler/bot.js'),
-        botConfig: config.facebook.ContentScheduler,
+        botConfig: {
+            ...config.facebook.ContentScheduler,
+            credentials: config.facebook.credentials
+        },
         botName: 'Facebook ContentScheduler'
     });
 }
@@ -45,12 +44,15 @@ if (config.facebook && config.facebook.ContentScheduler && config.facebook.Conte
 if (config.instagram && config.instagram.ContentScheduler && config.instagram.ContentScheduler.enabled) {
     botQueue.push({
         botPath: path.join(__dirname, '../Instagram/ContentScheduler/bot.js'),
-        botConfig: config.instagram.ContentScheduler,
+        botConfig: {
+            ...config.instagram.ContentScheduler,
+            config: config.instagram.ContentScheduler.config,
+            credentials: config.instagram.credentials
+        },
         botName: 'Instagram ContentScheduler'
     });
 }
 
-// Start processing the queue
 if (botQueue.length > 0) {
     console.log('Starting bot queue execution...');
     runNextBot();
