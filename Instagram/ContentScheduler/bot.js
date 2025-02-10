@@ -1,8 +1,8 @@
 const path = require('path');
 const { chromium } = require('playwright');
 
-const CHROME_PROFILE_PATH = 'C:\\Users\\Haroon\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 2';
-// const CHROME_PROFILE_PATH = 'C:\\Users\\Talha\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 17';
+// const CHROME_PROFILE_PATH = 'C:\\Users\\Haroon\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 2';
+const CHROME_PROFILE_PATH = 'C:\\Users\\Talha\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 17';
 
 
 /**
@@ -87,13 +87,22 @@ async function postImageToInstagram(imagePath, caption, postTime, username, pass
             page.click('span:has-text("Post"):visible'),
             page.click('a[role="link"]:has-text("Post")'),
             page.click('svg[aria-label="Post"]'),
-            page.click('div[role="dialog"] span:has-text("Post")')
+            page.click('div[role="dialog"] span:has-text("Post")'),
+            page.click('button:has-text("Select from computer")')
         ]);
-        console.log("Clicked on Post option");
+        console.log("Clicked on Post option or Select from computer button");
         await randomDelay(3000, 5000);
     } catch (error) {
-        console.log("Error clicking Post option:", error);
-        throw error;
+        console.log("Error clicking Post option or Select from computer:", error);
+        
+        // Additional fallback to check if "Select from computer" is available
+        try {
+            await page.click('button:has-text("Select from computer")');
+            console.log("Clicked 'Select from computer' as a fallback");
+        } catch (fallbackError) {
+            console.log("Fallback click also failed:", fallbackError);
+            throw error;
+        }
     }
 
     console.log("Waiting for file input...");
@@ -190,6 +199,9 @@ await randomDelay(3000, 5000);
 
 // Main function to run the bot
 async function runBot() {
+    // Parse the BOT_CONFIG passed via environment variable.
+    // Since the master script now forks one process per post,
+    // we expect botConfig.config to be a single post configuration.
     const botConfig = JSON.parse(process.env.BOT_CONFIG || '{}');
     const { config, credentials } = botConfig;
     
@@ -198,7 +210,7 @@ async function runBot() {
         return;
     }
 
-    // Destructure the nested config object
+    // Extract post-specific configuration.
     const { imagePath, caption, postTime } = config || {};
 
     // Validate required configuration
@@ -209,13 +221,13 @@ async function runBot() {
     }
 
     // Log the configuration for debugging
-    console.log("Bot Configuration:", {
+    console.log("Instagram Bot Configuration:", {
         imagePath,
         caption: caption && caption.trim() ? caption : 'Caption skipped',
         postTime
     });
 
-    // Call the post function with extracted config
+    // Call the post function with the single post's configuration.
     await postImageToInstagram(imagePath, caption, postTime, credentials.username, credentials.password);
 }
 

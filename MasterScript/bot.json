@@ -14,16 +14,23 @@
   },
   "instagram": {
       "credentials": {
-          "username": "parenting.io",
-          "password": "12345678"
+          "username": "J__Paul_Brandout",
+          "password": "limo@insta.acc"
       },
       "ContentScheduler": {
           "enabled": true,
-          "config": {
-              "imagePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\mile.png",
-              "postTime": "2025-02-09 23:40",
-              "caption": "milestones are very important for children"
-          }
+          "config": [
+              {
+                  "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg",
+                  "postTime": "2025-02-10 22:57",
+                  "caption": "milestones are very important for children"
+              },
+              {
+                  "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\goku.jpeg",
+                  "postTime": "2025-03-10 23:00",
+                  "caption": "Goku is the goat!"
+              }
+          ]
       }
   }
 }

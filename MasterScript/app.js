@@ -1,7 +1,7 @@
 // MasterScript/app.js
 // This master script loads the configuration file (bot.json)
-// and forks the respective bot scripts based on their enabled status.
-// Any extra configuration per bot is passed via the environment variable BOT_CONFIG.
+// and pushes all enabled bot tasks (across platforms) into a queue.
+// The queue is then sorted by each post's scheduled time and processed sequentially.
 
 const { fork } = require('child_process');
 const path = require('path');
@@ -9,27 +9,7 @@ const config = require('./bot.json');
 
 const botQueue = [];
 
-function runNextBot() {
-    if (botQueue.length > 0) {
-        const { botPath, botConfig, botName } = botQueue.shift();
-        console.log(`Launching ${botName} bot from ${botPath}`);
-
-        const child = fork(botPath, [], {
-            env: {
-                ...process.env,
-                BOT_CONFIG: JSON.stringify(botConfig)
-            }
-        });
-
-        child.on('exit', (code) => {
-            console.log(`${botName} bot exited with code ${code}`);
-            runNextBot();
-        });
-    } else {
-        console.log('All bots have completed execution.');
-    }
-}
-
+// Facebook ContentScheduler task (assumes a single facebook post)
 if (config.facebook && config.facebook.ContentScheduler && config.facebook.ContentScheduler.enabled) {
     botQueue.push({
         botPath: path.join(__dirname, '../Facebook/ContentScheduler/bot.js'),
@@ -41,21 +21,62 @@ if (config.facebook && config.facebook.ContentScheduler && config.facebook.Conte
     });
 }
 
+// Instagram ContentScheduler may now contain multiple posts.
 if (config.instagram && config.instagram.ContentScheduler && config.instagram.ContentScheduler.enabled) {
-    botQueue.push({
-        botPath: path.join(__dirname, '../Instagram/ContentScheduler/bot.js'),
-        botConfig: {
-            ...config.instagram.ContentScheduler,
-            config: config.instagram.ContentScheduler.config,
-            credentials: config.instagram.credentials
-        },
-        botName: 'Instagram ContentScheduler'
+    let instaPosts = config.instagram.ContentScheduler.config;
+    if (!Array.isArray(instaPosts)) {
+        // Wrap non-array into an array for consistency.
+        instaPosts = [instaPosts];
+    }
+    instaPosts.forEach((postConfig, index) => {
+        botQueue.push({
+            botPath: path.join(__dirname, '../Instagram/ContentScheduler/bot.js'),
+            botConfig: {
+                ...config.instagram.ContentScheduler,
+                // Set the config for a single post
+                config: postConfig,
+                credentials: config.instagram.credentials
+            },
+            botName: `Instagram ContentScheduler Post ${index + 1}`
+        });
     });
 }
 
+// --- SORT THE QUEUE BY SCHEDULED TIME ---
+// Both Facebook and Instagram configuration are assumed to contain a "postTime" property
+botQueue.sort((a, b) => {
+    const atime = new Date(a.botConfig.config.postTime);
+    const btime = new Date(b.botConfig.config.postTime);
+    return atime - btime;
+});
+
+// --- PROCESS THE QUEUE SEQUENTIALLY ---
+async function processQueue(queue) {
+    while (queue.length > 0) {
+        const task = queue.shift();
+        console.log(`Launching ${task.botName} bot from ${task.botPath}`);
+        await new Promise((resolve, reject) => {
+            const child = fork(task.botPath, [], {
+                env: {
+                    ...process.env,
+                    BOT_CONFIG: JSON.stringify(task.botConfig)
+                }
+            });
+            child.on('exit', (code) => {
+                console.log(`${task.botName} bot exited with code ${code}`);
+                resolve();
+            });
+            child.on('error', (err) => {
+                reject(err);
+            });
+        });
+    }
+    console.log("All scheduled tasks have been processed.");
+}
+
 if (botQueue.length > 0) {
-    console.log('Starting bot queue execution...');
-    runNextBot();
+    console.log("Processing bot queue sequentially...");
+    processQueue(botQueue).catch(err => console.error("Error processing bot queue:", err));
 } else {
-    console.log('No bots are enabled in the configuration.');
+    console.log("No bots are enabled in the configuration.");
 }
