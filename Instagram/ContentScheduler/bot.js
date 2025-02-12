@@ -1,83 +1,46 @@
 const path = require('path');
 const { chromium } = require('playwright');
+const os = require('os');
 
-// const CHROME_PROFILE_PATH = 'C:\\Users\\Haroon\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 2';
-const CHROME_PROFILE_PATH = 'C:\\Users\\Talha\\AppData\\Local\\Google\\Chrome\\User Data\\Profile 17';
-
+/**
+ * Returns the Chrome user profile directory dynamically.
+ *
+ * The function builds a dynamic path using the operating system's
+ * default locations for Chrome's user data. You only need to set the
+ * profile name (for example, "Profile 17") and the rest is handled automatically.
+ *
+ * @param {string} profileName - The name of the Chrome profile.
+ * @returns {string} The full path to the Chrome profile.
+ */
+function getChromeProfilePath(profileName) {
+    const baseDir =
+        process.platform === 'win32'
+            ? path.join(os.homedir(), 'AppData', 'Local', 'Google', 'Chrome', 'User Data')
+            : process.platform === 'darwin'
+            ? path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome')
+            : path.join(os.homedir(), '.config', 'google-chrome');
+    return path.join(baseDir, profileName);
+}
 
 /**
  * Returns a promise that resolves after a random delay.
- * Mimics human-like delays between actions.
+ * Helps simulate human-like behavior.
  */
 function randomDelay(min = 3000, max = 8000) {
     const delay = Math.floor(Math.random() * (max - min + 1)) + min;
     return new Promise(resolve => setTimeout(resolve, delay));
 }
 
-async function postImageToInstagram(imagePath, caption, postTime, username, password) {
-    console.log("Using Chrome profile:", CHROME_PROFILE_PATH);
-    console.log("username", username);
-    console.log("password", password);
+/**
+ * Contains the full UI flow to upload an image and share it as a post.
+ * This function uses an already launched page (already logged-in, etc).
+ *
+ * @param {import('playwright').Page} page - The Playwright page instance.
+ * @param {Object} post - Post details containing imagePath and caption.
+ */
+async function uploadAndSharePost(page, post) {
+    const { imagePath, caption } = post;
     
-    // Parse the post time
-    const postDateTime = new Date(postTime);
-    const now = new Date();
-
-    // Calculate the delay until the post time
-    const delayUntilPost = postDateTime - now;
-
-    if (delayUntilPost > 0) {
-        console.log(`Post scheduled for ${postDateTime}. Waiting ${delayUntilPost / 1000} seconds...`);
-        await new Promise(resolve => setTimeout(resolve, delayUntilPost));
-    } else {
-        console.log(`Post time ${postDateTime} has already passed. Posting immediately.`);
-    }
-    
-    const context = await chromium.launchPersistentContext(
-        CHROME_PROFILE_PATH,
-        { 
-            headless: false,
-            channel: 'chrome'
-        }
-    );
-    
-    const page = await context.newPage();
-    console.log("Browser launched successfully!");
-
-    console.log("Navigating to Instagram...");
-    await page.goto('https://www.instagram.com');
-    await page.waitForTimeout(3000 + await randomDelay());
-
-    // Check if login is required
-    const usernameSelector = "input[name='username']";
-    const passwordSelector = "input[name='password']";
-    const loginButtonSelector = 'button[type="submit"]';
-
-    if (await page.$(usernameSelector)) {
-        console.log("No session detected, performing login...");
-        
-        await page.fill(usernameSelector, username);
-        await randomDelay(3000, 5500);
-        
-        await page.fill(passwordSelector, password);
-        await randomDelay(3000, 5500);
-        
-        await page.click(loginButtonSelector);
-        console.log("Logging in...");
-
-        try {
-            await page.waitForSelector('div[role="button"]:has-text("Not now")', { timeout: 15000 });
-            console.log("Login successful! Dismissing 'Not now' popup.");
-            await randomDelay(2500, 5000);
-            await page.click('div[role="button"]:has-text("Not now")');
-            await randomDelay(2000, 4500);
-        } catch (err) {
-            console.log("Login may have failed or is taking too long.");
-        }
-    } else {
-        console.log("Session loaded. Skipping login.");
-    }
-
     console.log("Initiating new post...");
     await page.click('span:has-text("Create")');
     await randomDelay(3000, 5000);
@@ -94,8 +57,6 @@ async function postImageToInstagram(imagePath, caption, postTime, username, pass
         await randomDelay(3000, 5000);
     } catch (error) {
         console.log("Error clicking Post option or Select from computer:", error);
-        
-        // Additional fallback to check if "Select from computer" is available
         try {
             await page.click('button:has-text("Select from computer")');
             console.log("Clicked 'Select from computer' as a fallback");
@@ -143,41 +104,28 @@ async function postImageToInstagram(imagePath, caption, postTime, username, pass
     console.log("Clicked on caption field");
     await randomDelay(2000, 3000);
 
-   
-// Add caption text if provided and not empty
-if (caption && caption.trim()) {
-    await page.fill(captionSelector, caption);
-    console.log("Entering caption...");
-    await randomDelay(2000, 3000);
+    if (caption && caption.trim()) {
+        await page.fill(captionSelector, caption);
+        console.log("Entering caption...");
+        await randomDelay(2000, 3000);
+        await page.type(captionSelector, ' ', { delay: 100 });
+        await randomDelay(1000, 2000);
+        // Remove focus from caption input field.
+        await page.evaluate(() => document.activeElement.blur());
+        console.log("Caption entered successfully and input blurred.");
+    } else {
+        console.log("Skipping caption — none provided or empty");
+    }
 
-    // Simulate typing by sending keypresses
-    await page.type(captionSelector, ' ', { delay: 100 });
-    await randomDelay(1000, 2000);
-
-    // Remove focus from the caption input field
-    await page.evaluate(() => document.activeElement.blur());
-    console.log("Caption entered successfully and input blurred.");
-} else {
-    console.log("Skipping caption - none provided or empty");
-}
-
-await randomDelay(3000, 5000);
-
-    
+    await randomDelay(3000, 5000);
 
     console.log("Looking for share button in post modal...");
     await page.evaluate(() => {
         const headings = Array.from(document.querySelectorAll('div[role="heading"]'));
         const postModalHeading = headings.find(heading => heading.textContent.includes('Create new post'));
-        if (!postModalHeading) {
-            throw new Error('Post modal heading not found');
-        }
-
+        if (!postModalHeading) throw new Error('Post modal heading not found');
         const modalContainer = postModalHeading.closest('div[role="dialog"]');
-        if (!modalContainer) {
-            throw new Error('Modal container not found');
-        }
-
+        if (!modalContainer) throw new Error('Modal container not found');
         const buttons = Array.from(modalContainer.querySelectorAll('div[role="button"]'));
         const shareButton = buttons.find(button => button.textContent.includes('Share'));
         if (shareButton) {
@@ -189,46 +137,75 @@ await randomDelay(3000, 5000);
 
     console.log("Clicked share button");
     console.log("Image posted to Instagram successfully!");
-
-    
-    // Wait at least 2 minutes before closing the browser
-    console.log("Waiting 2 minutes before closing browser...");
-    await new Promise(resolve => setTimeout(resolve, 120000)); // 2 minutes
-    await context.close();
 }
 
-// Main function to run the bot
+/**
+ * Main function to run the Instagram bot.
+ *
+ * It can process a single post or an array of posts. For multiple posts,
+ * if the gap between scheduled post times is 5 minutes or less,
+ * the bot will simply reload the Instagram DOM to post the next post.
+ * For longer gaps, it will close the current browser window and launch a new one.
+ */
 async function runBot() {
-    // Parse the BOT_CONFIG passed via environment variable.
-    // Since the master script now forks one process per post,
-    // we expect botConfig.config to be a single post configuration.
-    const botConfig = JSON.parse(process.env.BOT_CONFIG || '{}');
-    const { config, credentials } = botConfig;
-    
+    const { config, credentials, browser_profile_name } = JSON.parse(process.env.BOT_CONFIG || '{}');
     if (!credentials || !credentials.username || !credentials.password) {
         console.error("Missing Instagram credentials in configuration.");
         return;
     }
-
-    // Extract post-specific configuration.
-    const { imagePath, caption, postTime } = config || {};
-
-    // Validate required configuration
-    if (!imagePath) {
+    const chromeProfilePath = getChromeProfilePath(browser_profile_name);
+    // Normalize config to an array even for single posts.
+    const posts = Array.isArray(config) ? config.sort((a, b) => new Date(a.postTime) - new Date(b.postTime)) : [config];
+    if (!posts[0].imagePath) {
         console.error("No image path provided in configuration.");
-        console.log("Received botConfig:", JSON.stringify(botConfig, null, 2)); // Debug log
         return;
     }
+    
+    let context, page, lastScheduledTime;
+    const launchBrowser = async () => {
+        if (context) await context.close();
+        context = await chromium.launchPersistentContext(chromeProfilePath, { headless: false, channel: 'chrome' });
+        page = await context.newPage();
+        console.log("Browser launched successfully!");
+        console.log("Navigating to Instagram...");
+        await page.goto('https://www.instagram.com');
+        await page.waitForTimeout(3000);
+    };
 
-    // Log the configuration for debugging
-    console.log("Instagram Bot Configuration:", {
-        imagePath,
-        caption: caption && caption.trim() ? caption : 'Caption skipped',
-        postTime
-    });
+    for (const [idx, post] of posts.entries()) {
+        const scheduledTime = new Date(post.postTime);
+        if (!context || (lastScheduledTime && (scheduledTime - lastScheduledTime > 300000))) {
+            if (context) console.log("Gap more than 5 minutes detected. Closing current window.");
+            await launchBrowser();
+        } else {
+            console.log("Short gap detected. Preparing for next post.");
+        }
 
-    // Call the post function with the single post's configuration.
-    await postImageToInstagram(imagePath, caption, postTime, credentials.username, credentials.password);
+        const delay = scheduledTime - new Date();
+        if (delay > 0) {
+            console.log(`Waiting ${(delay / 1000).toFixed(2)} seconds until scheduled time ${scheduledTime}`);
+            await new Promise(res => setTimeout(res, delay));
+        } else {
+            console.log(`Scheduled time ${scheduledTime} already passed. Posting immediately.`);
+        }
+        
+        await uploadAndSharePost(page, post);
+        
+        if (idx < posts.length - 1) {
+            console.log("Waiting 15 seconds before next post...");
+            await new Promise(res => setTimeout(res, 10000));
+            console.log("Refreshing Instagram for next post.");
+            await page.reload();
+            await page.waitForTimeout(3000);
+        }
+        lastScheduledTime = scheduledTime;
+    }
+    
+    if (context) {
+        console.log("Waiting 2 minutes before closing browser...");
+        await new Promise(res => setTimeout(res, 120000));
+        await context.close();
+    }
 }
 
 runBot().catch(err => {
