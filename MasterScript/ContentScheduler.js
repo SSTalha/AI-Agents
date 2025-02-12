@@ -12,14 +12,15 @@ async function runContentScheduler(botConfig) {
   // Create a bot task if enabled in the config
   const createBotTask = (platform, schedulerType, botPath) => {
     const platformConfig = botConfig[platform];
-    if (!platformConfig?.[schedulerType]?.enabled) return null;
+    // Check if platform exists and ContentScheduler is enabled
+    if (!platformConfig?.ContentScheduler?.enabled) return null;
 
     return {
       botPath: path.join(__dirname, botPath),
       botConfig: {
         ...platformConfig[schedulerType],
         credentials: platformConfig.credentials,
-        ...(platform === 'instagram' && { browser_profile_name: platformConfig.browser_profile_name })
+        browser_profile_name: platformConfig.browser_profile_name
       },
       botName: `${platform.charAt(0).toUpperCase() + platform.slice(1)} ${schedulerType}`
     };
@@ -55,9 +56,10 @@ async function runContentScheduler(botConfig) {
 
   const buildBotQueue = () => {
     const facebookTask = createBotTask('facebook', 'ContentScheduler', '../Facebook/ContentScheduler/bot.js');
-    const instagramTasks = botConfig.instagram?.ContentScheduler?.config
+    const instagramTasks = botConfig.instagram?.ContentScheduler?.enabled 
       ? groupInstagramPosts(botConfig.instagram.ContentScheduler.config)
       : [];
+    
     const botQueue = [facebookTask, ...instagramTasks].filter(Boolean);
 
     return botQueue.sort((a, b) => {
