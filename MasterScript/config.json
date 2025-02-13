@@ -11,12 +11,12 @@
             {
                 "postTime": "2025-02-13 22:07",
                 "postContent": "milestones are very important for children",
-                "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg"
+                "imagePath": "C:\\Users\\<user>\\Desktop\\sample\\cat.jpeg"
             },
             {
                 "postTime": "2025-02-13 22:10",
                 "postContent": "Another milestone achieved!",
-                "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\goku.jpeg"
+                "imagePath": "C:\\Users\\<user>\\Desktop\\sample\\goku.jpeg"
             }
         ]
     }
@@ -31,12 +31,12 @@
           "enabled": true,
           "config": [
               {
-                  "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg",
+                  "imagePath": "C:\\Users\\<user>\\Desktop\\sample\\cat.jpeg",
                   "postTime": "2025-02-12 22:07",
                   "caption": "milestones are very important for children"
               },
               {
-                  "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\goku.jpeg",
+                  "imagePath": "C:\\Users\\<user>\\Desktop\\sample\\goku.jpeg",
                   "postTime": "2025-02-12 22:10",
                   "caption": "Goku is the goat!"
               }
