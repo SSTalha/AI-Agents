@@ -1,22 +1,22 @@
 {
   "facebook": {
-    "browser_profile_name": "Profile 5",
+    "browser_profile_name": "Profile 20s",
     "credentials": {
-        "username": "email",
-        "password": "password"
+        "username": "jennifierann@gmail.com ",
+        "password": ":5&[Wb]~"
     },
     "ContentScheduler": {
         "enabled": true,
         "config": [
             {
-                "postTime": "2025-02-13 21:39",
+                "postTime": "2025-02-13 22:07",
                 "postContent": "milestones are very important for children",
-                "imagePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\mile.png"
+                "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg"
             },
             {
-                "postTime": "2025-02-13 21:42",
+                "postTime": "2025-02-13 22:10",
                 "postContent": "Another milestone achieved!",
-                "imagePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\car.jpg"
+                "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\goku.jpeg"
             }
         ]
     }
@@ -28,16 +28,16 @@
           "password": "limo@insta.acc"
     },
     "ContentScheduler": {
-          "enabled": false,
+          "enabled": true,
           "config": [
               {
                   "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg",
-                  "postTime": "2025-02-12 20:50",
+                  "postTime": "2025-02-12 22:07",
                   "caption": "milestones are very important for children"
               },
               {
                   "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\goku.jpeg",
-                  "postTime": "2025-02-12 20:52",
+                  "postTime": "2025-02-12 22:10",
                   "caption": "Goku is the goat!"
               }
           ]
