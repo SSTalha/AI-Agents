@@ -1,156 +1,206 @@
-const { chromium } = require('playwright');
-const schedule = require('node-schedule');
-const fs = require('fs').promises;
 const path = require('path');
+const { chromium } = require('playwright');
+const os = require('os');
 
-const EMAIL = "alirizwan921111@gmail.com";
-const PASSWORD = "haroon@8523";
 
-const POST_CONTENT = "Hey my name is ali rizwan and i want to be a software engineer";
-const POST_TIME = "2025-02-02 20:33";
-
-const humanDelay = async () => {
-    const delay = Math.floor(Math.random() * (8000 - 3000) + 3000);
-    await new Promise(resolve => setTimeout(resolve, delay));
-};
-
-async function loginToFacebook(page) {
-    console.log("Attempting to login...");
-    
-    await page.waitForSelector('input[data-testid="royal-email"]');
-    await humanDelay();
-    for (const char of EMAIL.split('')) {
-        await page.type('input[data-testid="royal-email"]', char);
-        await new Promise(resolve => setTimeout(resolve, Math.random() * 300));
-    }
-
-    await humanDelay();
-
-    await page.waitForSelector('input[data-testid="royal-pass"]');
-    await humanDelay();
-    for (const char of PASSWORD.split('')) {
-        await page.type('input[data-testid="royal-pass"]', char);
-        await new Promise(resolve => setTimeout(resolve, Math.random() * 300));
-    }
-
-    await humanDelay();
-
-    await page.click('button[data-testid="royal-login-button"]');
-    
-    try {
-        await page.waitForLoadState('networkidle', { timeout: 60000 });
-        await humanDelay();
-        
-        const currentUrl = page.url();
-        if (currentUrl.includes('sk=welcome')) {
-            console.log("Redirecting to homepage...");
-            await page.goto('https://www.facebook.com', {
-                waitUntil: 'networkidle',
-                timeout: 60000
-            });
-            
-            await page.waitForSelector('div[role="main"]', { timeout: 60000 });
-            await humanDelay();
-        }
-        
-        console.log("Login successful!");
-    } catch (error) {
-        console.log("Navigation timeout occurred, but continuing anyway...");
-    }
+/**
+ * Returns the Chrome user profile directory dynamically.
+ */
+function getChromeProfilePath(profileName) {
+    const baseDir =
+        process.platform === 'win32'
+            ? path.join(os.homedir(), 'AppData', 'Local', 'Google', 'Chrome', 'User Data')
+            : process.platform === 'darwin'
+            ? path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome')
+            : path.join(os.homedir(), '.config', 'google-chrome');
+    return path.join(baseDir, profileName);
 }
 
-async function checkStorageState() {
-    try {
-        await fs.access('facebook.json');
-        return true;
-    } catch {
-        return false;
-    }
+/**
+ * Returns a promise that resolves after a random delay.
+ */
+function randomDelay(min = 5000, max = 9000) {
+    const delay = Math.floor(Math.random() * (max - min + 1)) + min;
+    return new Promise(resolve => setTimeout(resolve, delay));
 }
 
-async function postToFacebook(browser, page) {
-    console.log("Creating scheduled post...");
-
+/**
+ * Creates a Facebook post with the given content and image
+ */
+async function createPost(page, post) {
+    const { postContent, imagePath } = post;
+    console.log("Creating new post...");
+    
+    // Wait for and click the post creation button
     await page.waitForSelector('div[role="button"] span:has-text("What\'s on your mind")', { timeout: 60000 });
-    await humanDelay();
+    await randomDelay();
     await page.click('div[role="button"] span:has-text("What\'s on your mind")');
     
-    console.log("Waiting for post modal to fully load...");
-    await new Promise(resolve => setTimeout(resolve, 60000));
+    console.log("Waiting for post modal to load...");
+    await randomDelay(5000, 10000);
     
+    // Enter post content
     await page.waitForSelector('[contenteditable="true"][role="textbox"]', { timeout: 60000 });
-    await humanDelay();
+    await randomDelay();
     
-    const chars = POST_CONTENT.split('');
-    for (const char of chars) {
+    // Type content with human-like delays
+    for (const char of postContent.split('')) {
         await page.type('[contenteditable="true"][role="textbox"]', char);
-        await new Promise(resolve => setTimeout(resolve, Math.random() * 500));
+        await new Promise(resolve => setTimeout(resolve, Math.random() * 300));
     }
     
-    await humanDelay();
+    // If we have an image to upload
+    if (imagePath) {
+        console.log("Preparing to upload image...");
+        
+        // Click "Add to your post"
+        await page.waitForSelector('div[aria-label="Add to your post"]');
+        await randomDelay();
+        // await page.click('div[aria-label="Add to your post"]');
+        
+        // Click Photo/video button
+        await page.waitForSelector('div[aria-label="Photo/video"]');
+        await randomDelay();
+        await page.click('div[aria-label="Photo/video"]');
+        
+        // Wait for file input and upload image
+        try {
+            console.log("Uploading image...");
+            const absoluteImagePath = path.resolve(imagePath);
+            
+            // Look for file input
+            const fileInputElement = await page.$('input[type="file"]');
+            if (fileInputElement) {
+                await page.setInputFiles('input[type="file"]', absoluteImagePath);
+            } else {
+                // If direct file input is not found, try file chooser event
+                const [fileChooser] = await Promise.all([
+                    page.waitForEvent('filechooser'),
+                    page.click('div[aria-label="Photo/video"]')
+                ]);
+                await randomDelay();
+                await fileChooser.setFiles(absoluteImagePath);
+            }
+            
+            console.log("Image uploaded successfully");
+            await randomDelay(5000, 10000); // Wait for image to upload
+        } catch (error) {
+            console.error("Error uploading image:", error);
+            throw error;
+        }
+    }
 
+    await randomDelay();
+
+    // Click post button
     await page.click('div[aria-label="Post"][role="button"]');
-    
     console.log("Post created successfully!");
-    await humanDelay();
-
-    console.log("Waiting 3 minutes before closing...");
-    await new Promise(resolve => setTimeout(resolve, 180000));
     
-    await browser.close();
-    process.exit(0);
+    // Wait for post to complete
+    await randomDelay(8000, 12000);
 }
 
-(async () => {
-    const browser = await chromium.launch({
-        headless: false,
-        channel: 'chrome',
-    });
-
-    let context;
-    const hasStorageState = await checkStorageState();
-
-    if (hasStorageState) {
-        console.log("Found existing session, trying to restore...");
-        context = await browser.newContext({
-            storageState: 'facebook.json'
-        });
-    } else {
-        console.log("No existing session found, creating new context...");
-        context = await browser.newContext();
+/**
+ * Main function to run the Facebook bot
+ */
+async function runBot() {
+    const { config, credentials, browser_profile_name } = JSON.parse(process.env.BOT_CONFIG || '{}');
+    if (!credentials || !credentials.username || !credentials.password) {
+        console.error("Missing Facebook credentials in configuration.");
+        return;
     }
 
-    const page = await context.newPage();
+    const chromeProfilePath = getChromeProfilePath(browser_profile_name);
+    // Normalize config to array even for single posts
+    const posts = Array.isArray(config) ? config : [config];
     
-    console.log("Starting Facebook Bot...");
-    await page.goto('https://www.facebook.com');
+    if (!posts.length) {
+        console.error("No posts configured.");
+        return;
+    }
+
+    // Sort posts by scheduled time
+    posts.sort((a, b) => new Date(a.postTime) - new Date(b.postTime));
     
-    try {
-        // Check login status
-        const isLoggedIn = await page.waitForSelector('input[data-testid="royal-email"]', { timeout: 5000 })
-            .then(() => false)
-            .catch(() => true);
+    let context, page, lastScheduledTime;
+    
+    const launchBrowser = async () => {
+        if (context) await context.close();
+        context = await chromium.launchPersistentContext(chromeProfilePath, { 
+            headless: false, 
+            channel: 'chrome' 
+        });
+        page = await context.newPage();
+        console.log("Browser launched successfully!");
+        
+        console.log("Navigating to Facebook...");
+        await page.goto('https://www.facebook.com');
+        await randomDelay();
+
+        // Check if login is needed
+        const isLoggedIn = await page.waitForSelector('div[role="button"] span:has-text("What\'s on your mind")', { 
+            timeout: 5000 
+        }).then(() => true).catch(() => false);
 
         if (!isLoggedIn) {
-            console.log("Not logged in, attempting login...");
-            await loginToFacebook(page);
-            
-            // Save the storage state after successful login
-            console.log("Saving session state...");
-            await context.storageState({ path: 'facebook.json' });
+            console.log("Login required. Attempting to login...");
+            await page.waitForSelector('input[data-testid="royal-email"]');
+            await randomDelay();
+            await page.type('input[data-testid="royal-email"]', credentials.username, { delay: 300 });
+            await randomDelay();
+            await page.type('input[data-testid="royal-pass"]', credentials.password, { delay: 300 });
+            await randomDelay();
+            await page.click('button[data-testid="royal-login-button"]');
+            await page.waitForLoadState('networkidle', { timeout: 60000 });
+            await page.waitForSelector('div[role="button"] span:has-text("What\'s on your mind")', { 
+                timeout: 60000 
+            });
         } else {
             console.log("Already logged in!");
         }
+    };
+
+    for (const [idx, post] of posts.entries()) {
+        const scheduledTime = new Date(post.postTime);
         
-        console.log(`Waiting for scheduled post time: ${POST_TIME}`);
+        // If this is the first post or if more than 5 minutes have passed since last post
+        if (!context || (lastScheduledTime && (scheduledTime - lastScheduledTime > 300000))) {
+            if (context) {
+                console.log("Gap more than 5 minutes detected. Closing current window.");
+            }
+            await launchBrowser();
+        } else {
+            console.log("Short gap detected. Preparing for next post.");
+        }
+
+        const delay = scheduledTime - new Date();
+        if (delay > 0) {
+            console.log(`Waiting ${(delay / 1000).toFixed(2)} seconds until scheduled time ${scheduledTime}`);
+            await new Promise(res => setTimeout(res, delay));
+        } else {
+            console.log(`Scheduled time ${scheduledTime} already passed. Posting immediately.`);
+        }
         
-        schedule.scheduleJob(POST_TIME, async function () {
-            console.log(`It's time! Creating scheduled post...`);
-            await postToFacebook(browser, page);
-        });
-    } catch (error) {
-        console.error("Error:", error);
-        await browser.close();
-        process.exit(1);
+        await createPost(page, post);
+        
+        if (idx < posts.length - 1) {
+            console.log("Waiting 15 seconds before next post...");
+            await new Promise(res => setTimeout(res, 15000));
+            console.log("Refreshing Facebook for next post.");
+            await page.reload();
+            await randomDelay();
+        }
+        lastScheduledTime = scheduledTime;
     }
-})();
+    
+    if (context) {
+        console.log("Waiting 2 minutes before closing browser...");
+        await new Promise(res => setTimeout(res, 120000));
+        await context.close();
+    }
+}
+
+runBot().catch(err => {
+    console.error("Error running Facebook bot:", err);
+    process.exit(1);
+});

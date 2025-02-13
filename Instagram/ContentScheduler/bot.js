@@ -192,7 +192,7 @@ async function runBot() {
         await uploadAndSharePost(page, post);
         
         if (idx < posts.length - 1) {
-            console.log("Waiting 15 seconds before next post...");
+            console.log("Waiting 10 seconds before next post...");
             await new Promise(res => setTimeout(res, 10000));
             console.log("Refreshing Instagram for next post.");
             await page.reload();

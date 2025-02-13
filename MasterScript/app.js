@@ -1,10 +1,10 @@
 /**
  * MasterScript/app.js
  *
- * This is the entry point that loads the configuration (bot.json) and based on which bots are enabled
+ * This is the entry point that loads the configuration (config.json) and based on which bots are enabled
  * (e.g., ContentScheduler and EngagementBot), it calls the corresponding modules with their configuration.
  */
-const config = require('./bot.json');
+const config = require('./config.json');
 const { runContentScheduler } = require('./ContentScheduler');
 const { runEngagementBot } = require('./Engagement');
 

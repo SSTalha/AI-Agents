@@ -1,0 +1,46 @@
+{
+  "facebook": {
+    "browser_profile_name": "Profile 20s",
+    "credentials": {
+        "username": "jennifierann@gmail.com ",
+        "password": ":5&[Wb]~"
+    },
+    "ContentScheduler": {
+        "enabled": true,
+        "config": [
+            {
+                "postTime": "2025-02-13 22:07",
+                "postContent": "milestones are very important for children",
+                "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg"
+            },
+            {
+                "postTime": "2025-02-13 22:10",
+                "postContent": "Another milestone achieved!",
+                "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\goku.jpeg"
+            }
+        ]
+    }
+  },
+  "instagram": {
+    "browser_profile_name": "Profile 17",
+    "credentials": {
+          "username": "J__Paul_Brandout",
+          "password": "limo@insta.acc"
+    },
+    "ContentScheduler": {
+          "enabled": true,
+          "config": [
+              {
+                  "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg",
+                  "postTime": "2025-02-12 22:07",
+                  "caption": "milestones are very important for children"
+              },
+              {
+                  "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\goku.jpeg",
+                  "postTime": "2025-02-12 22:10",
+                  "caption": "Goku is the goat!"
+              }
+          ]
+      }
+  }
+}
