@@ -45,7 +45,7 @@ async function createPost(page, post) {
     
     // Type content with human-like delays
     for (const char of postContent.split('')) {
-        await page.type('[contenteditable="true"][role="textbox"]', char, { delay: 100 });
+        await page.type('[contenteditable="true"][role="textbox"]', char);
         await new Promise(resolve => setTimeout(resolve, Math.random() * 300));
     }
     
@@ -111,11 +111,16 @@ async function runBot() {
     }
 
     const chromeProfilePath = getChromeProfilePath(browser_profile_name);
-    console.log("chrome profile path: ", chromeProfilePath);
-    await randomDelay(8000, 12000);
-
     // Normalize config to array even for single posts
     const posts = Array.isArray(config) ? config : [config];
+    
+    if (!posts.length) {
+        console.error("No posts configured.");
+        return;
+    }
+
+    // Sort posts by scheduled time
+    posts.sort((a, b) => new Date(a.postTime) - new Date(b.postTime));
     
     let context, page, lastScheduledTime;
     
@@ -157,8 +162,12 @@ async function runBot() {
 
     for (const [idx, post] of posts.entries()) {
         const scheduledTime = new Date(post.postTime);
+        
+        // If this is the first post or if more than 5 minutes have passed since last post
         if (!context || (lastScheduledTime && (scheduledTime - lastScheduledTime > 300000))) {
-            if (context) console.log("Gap more than 5 minutes detected. Closing current window.");
+            if (context) {
+                console.log("Gap more than 5 minutes detected. Closing current window.");
+            }
             await launchBrowser();
         } else {
             console.log("Short gap detected. Preparing for next post.");
