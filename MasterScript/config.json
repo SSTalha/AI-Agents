@@ -9,12 +9,7 @@
         "enabled": true,
         "config": [
             {
-                "postTime": "2025-02-13 21:39",
-                "postContent": "milestones are very important for children",
-                "imagePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\mile.png"
-            },
-            {
-                "postTime": "2025-02-13 21:42",
+                "postTime": "2025-02-14 20:38",
                 "postContent": "Another milestone achieved!",
                 "imagePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\car.jpg"
             }
@@ -24,8 +19,8 @@
   "instagram": {
     "browser_profile_name": "Profile 17",
     "credentials": {
-          "username": "J__Paul_Brandout",
-          "password": "limo@insta.acc"
+          "username": "J__Pa",
+          "password": "limo@ins"
     },
     "ContentScheduler": {
           "enabled": false,
