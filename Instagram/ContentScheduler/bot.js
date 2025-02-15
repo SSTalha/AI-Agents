@@ -54,7 +54,7 @@ async function uploadAndSharePost(page, post) {
             page.click('button:has-text("Select from computer")')
         ]);
         console.log("Clicked on Post option or Select from computer button");
-        await randomDelay(3000, 5000);
+        await randomDelay(3000, 6000);
     } catch (error) {
         console.log("Error clicking Post option or Select from computer:", error);
         try {
@@ -67,6 +67,7 @@ async function uploadAndSharePost(page, post) {
     }
 
     console.log("Waiting for file input...");
+    randomDelay(1000 , 2000)
     await page.waitForSelector('button:has-text("Select from computer")', { 
         timeout: 60000,
         state: 'visible'
@@ -170,6 +171,47 @@ async function runBot() {
         console.log("Navigating to Instagram...");
         await page.goto('https://www.instagram.com');
         await page.waitForTimeout(3000);
+
+        // Attempt login: Try both username field variants
+        try {
+            console.log("Checking for username field in login form...");
+            
+            // Try first variant
+            try {
+                await page.waitForSelector('input[aria-label="Phone number, username, or email"]', { timeout: 5000 });
+                console.log("Found first variant of username field. Typing username...");
+                await page.type('input[aria-label="Phone number, username, or email"]', credentials.username, { delay: 650 });
+                console.log("Username entered successfully in first variant.");
+                randomDelay(2000, 4000)
+
+                // Password input for first variant
+                await page.type('input[aria-label="Password"]', credentials.password, { delay: 850 });
+                console.log("Password entered successfully in first variant.");
+                randomDelay(2000, 4000)
+
+                await page.click('button[type="submit"]:has-text("Log in")');
+                console.log("Clicked login button in first variant");
+            
+            } catch (error) {
+                // If first variant fails, try second variant
+                console.log("First variant not found, trying second variant...");
+                await page.waitForSelector('input[name="email"]', { timeout: 5000 });
+                console.log("Found second variant of username field. Typing username...");
+                await page.type('input[name="email"]', credentials.username, { delay: 650 });
+                console.log("Username entered successfully in second variant.");
+                randomDelay(2000, 4000)
+
+                // Password input for second variant
+                await page.type('input[name="pass"]', credentials.password, { delay: 850 });
+                console.log("Password entered successfully in second variant.");
+                randomDelay(2000, 4000)
+
+                await page.click('div[role="button"]:has-text("Log in")');
+                console.log("Clicked login button in second variant");
+            }
+        } catch (error) {
+            console.log("Neither username field variant appeared. Skipping login attempt.", error);
+        }
     };
 
     for (const [idx, post] of posts.entries()) {
@@ -189,6 +231,7 @@ async function runBot() {
             console.log(`Scheduled time ${scheduledTime} already passed. Posting immediately.`);
         }
         
+        randomDelay(1500, 3000)
         await uploadAndSharePost(page, post);
         
         if (idx < posts.length - 1) {

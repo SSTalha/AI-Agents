@@ -155,6 +155,23 @@ async function runBot() {
             await page.waitForSelector('div[role="button"] span:has-text("What\'s on your mind")', { 
                 timeout: 60000 
             });
+
+            // Refresh the page after logging in
+            await page.reload();
+            await randomDelay();
+
+            // Check for the "Save" login info pop-up and click "Save" if it appears
+            // const saveButtonVisible = await page.waitForSelector('span:has-text("Save")');
+            // if (saveButtonVisible) {
+            //     console.log("Save login info pop-up detected. Clicking 'Save'...");
+            //     await page.click('span:has-text("Save")');
+            //     await randomDelay();
+            // } else {
+            //     console.log("Save login info pop-up not visible. Clicking 'Not now'...");
+            //     await page.waitForSelector('span:has-text("Not now")');
+            //     await page.click('span:has-text("Not now")');
+            //     await randomDelay();
+            // }
         } else {
             console.log("Already logged in!");
         }
