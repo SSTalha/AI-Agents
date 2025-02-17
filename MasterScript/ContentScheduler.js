@@ -53,21 +53,54 @@ const groupInstagramPosts = (posts, botConfig) => {
   }));
 };
 
+// Group X posts if multiple posts are scheduled within a 5-minute gap
+const groupXPosts = (posts, botConfig) => {
+  const sortedPosts = (Array.isArray(posts) ? posts : [posts])
+    .sort((a, b) => new Date(a.postTime) - new Date(b.postTime));
+
+  const groupedPosts = sortedPosts.reduce((groups, post) => {
+    const lastGroup = groups[groups.length - 1];
+    if (!lastGroup || (new Date(post.postTime) - new Date(lastGroup[0].postTime) > 300000)) {
+      groups.push([post]);
+    } else {
+      lastGroup.push(post);
+    }
+    return groups;
+  }, []);
+
+  return groupedPosts.map((group, index) => ({
+    botPath: path.join(__dirname, '../X/ContentScheduler/bot.js'),
+    botConfig: {
+      ...botConfig.x.ContentScheduler,
+      config: group.length === 1 ? group[0] : group,
+      credentials: botConfig.x.credentials,
+      browser_profile_name: botConfig.x.browser_profile_name,
+      scheduledTime: group[0].postTime
+    },
+    botName: `X ContentScheduler Post ${group.length > 1 ? `Group ${index + 1}` : index + 1}`
+  }));
+};
+
 const buildBotQueuesByPlatform = (botConfig) => {
   // Create individual queues for each platform.
   const facebookTask = createBotTask('facebook', 'ContentScheduler', '../Facebook/ContentScheduler/bot.js', botConfig);
   const instagramTasks = botConfig.instagram?.ContentScheduler?.enabled
     ? groupInstagramPosts(botConfig.instagram.ContentScheduler.config, botConfig)
     : [];
+  const xTasks = botConfig.x?.ContentScheduler?.enabled
+    ? groupXPosts(botConfig.x.ContentScheduler.config, botConfig)
+    : [];
 
   const queues = {};
-
+  
   if (facebookTask) {
     queues.facebook = [facebookTask];
   }
   if (instagramTasks.length > 0) {
-    // instagramTasks is already an array of tasks.
     queues.instagram = instagramTasks;
+  }
+  if (xTasks.length > 0) {
+    queues.x = xTasks;
   }
   return queues;
 };
