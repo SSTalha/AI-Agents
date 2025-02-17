@@ -27,6 +27,16 @@ const { runEngagementBot } = require('./Engagement');
     tasks.push(runEngagementBot(config));
   }
 
+  // Check if any ContentScheduler is enabled in X
+  if (config.x?.ContentScheduler && config.x.ContentScheduler.enabled) {
+    tasks.push(runContentScheduler(config));
+  }
+
+  // Check if any EngagementBot is enabled in X
+  if (config.x?.EngagementBot && config.x.EngagementBot.enabled) {
+    tasks.push(runEngagementBot(config));
+  }
+
   if (tasks.length) {
     await Promise.all(tasks);
     console.log("All bot tasks executed.");
