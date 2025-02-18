@@ -14,7 +14,9 @@ const { runEngagementBot } = require('./Engagement');
   // Check if any ContentScheduler is enabled in either Facebook or Instagram
   if (
     (config.facebook?.ContentScheduler && config.facebook.ContentScheduler.enabled) ||
-    (config.instagram?.ContentScheduler && config.instagram.ContentScheduler.enabled)
+    (config.instagram?.ContentScheduler && config.instagram.ContentScheduler.enabled) ||
+    (config.x?.ContentScheduler && config.x.ContentScheduler.enabled) ||
+    (config.linkedin?.ContentScheduler && config.linkedin.ContentScheduler.enabled)
   ) {
     tasks.push(runContentScheduler(config));
   }
@@ -22,7 +24,8 @@ const { runEngagementBot } = require('./Engagement');
   // Check if any EngagementBot is enabled (this supports multiple platforms)
   if (
     (config.facebook?.EngagementBot && config.facebook.EngagementBot.enabled) ||
-    (config.instagram?.EngagementBot && config.instagram.EngagementBot.enabled)
+    (config.instagram?.EngagementBot && config.instagram.EngagementBot.enabled) ||
+    (config.x?.EngagementBot && config.x.EngagementBot.enabled)
   ) {
     tasks.push(runEngagementBot(config));
   }
