@@ -51,7 +51,7 @@
       "email": "alicheema.omni@gmail.com"
     },
     "ContentScheduler": {
-      "enabled": true,
+      "enabled": false,
       "config": [
         {
           "postTime": "2025-02-15 05:35",
@@ -64,6 +64,23 @@
           "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\goku.jpeg"
         }
       ]
+    }
+  },
+  "linkedin": {
+    "browser_profile_name": "Profile 2",
+    "credentials": {
+        "username": "syedali.ahsan7654321@gmail.com",
+        "password": "Link@1232"
+    },
+    "ContentScheduler": {
+        "enabled": true,
+        "config": [
+            {
+                "postTime": "2025-02-18 22:20",
+                "postContent": "hello this is my a info",
+                "imagePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\mile.png"
+            }
+        ]
     }
   }
 }

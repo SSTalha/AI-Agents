@@ -94,6 +94,7 @@ const buildBotQueuesByPlatform = (botConfig) => {
   const xTasks = botConfig.x?.ContentScheduler?.enabled
     ? groupXPosts(botConfig.x.ContentScheduler.config, botConfig)
     : [];
+  const linkedinTask = createBotTask('linkedin', 'ContentScheduler', '../Linkedin/ContentScheduler/bot.js', botConfig);
 
   const queues = {};
   
@@ -105,6 +106,9 @@ const buildBotQueuesByPlatform = (botConfig) => {
   }
   if (xTasks.length > 0) {
     queues.x = xTasks;
+  }
+  if (linkedinTask) {
+    queues.linkedin = [linkedinTask];
   }
   return queues;
 };
