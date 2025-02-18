@@ -73,7 +73,11 @@ const groupXPosts = (posts, botConfig) => {
     botConfig: {
       ...botConfig.x.ContentScheduler,
       config: group.length === 1 ? group[0] : group,
-      credentials: botConfig.x.credentials,
+      credentials: {
+        username: botConfig.x.credentials.username,
+        password: botConfig.x.credentials.password,
+        email: botConfig.x.credentials.email
+      },
       browser_profile_name: botConfig.x.browser_profile_name,
       scheduledTime: group[0].postTime
     },

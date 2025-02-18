@@ -66,12 +66,34 @@ async function runBot() {
             await page.waitForSelector('input[autocomplete="username"][name="text"]', { timeout: 5000 });
             await page.type('input[autocomplete="username"][name="text"]', credentials.username, { delay: 650 });
             console.log("Username entered successfully");
-            await randomDelay(2000, 3500);
+            await randomDelay(2000, 3000);
             
             console.log("Looking for next button...");
             await page.waitForSelector('button:has-text("Next")', { timeout: 5000 });
             await page.click('button:has-text("Next")');
             await randomDelay(2000, 3000);
+            
+            // Check if extra email verification is required (first email prompt)
+            let emailVerificationRequired = false;
+            try {
+                console.log("Checking for email field to determine verification flow...");
+                await page.waitForSelector('input[data-testid="ocfEnterTextTextInput"]', { timeout: 3000 });
+                emailVerificationRequired = true;
+            } catch (err) {
+                emailVerificationRequired = false;
+            }
+            
+            if (emailVerificationRequired) {
+                console.log("Email field detected, entering email for verification...");
+                await page.type('input[data-testid="ocfEnterTextTextInput"]', credentials.email, { delay: 650 });
+                console.log("Email entered successfully");
+                await randomDelay(2000, 3000);
+                
+                console.log("Looking for next button...");
+                await page.waitForSelector('button:has-text("Next")', { timeout: 5000 });
+                await page.click('button:has-text("Next")');
+                await randomDelay(2000, 3000);
+            }
             
             console.log("Looking for password field...");
             await page.waitForSelector('input[autocomplete="current-password"]', { timeout: 5000 });
@@ -79,10 +101,27 @@ async function runBot() {
             console.log("Password entered successfully");
             await randomDelay(2000, 3000);
             
-            console.log("Looking for login button...");
+            console.log("Clicking login button...");
             await page.waitForSelector('button[data-testid="LoginForm_Login_Button"]', { timeout: 5000 });
             await page.click('button[data-testid="LoginForm_Login_Button"]');
             console.log("Login attempt completed");
+            
+            // Handle the case where Twitter asks for email again (final email verification step)
+            try {
+                console.log("Checking for final email verification prompt...");
+                await page.waitForSelector('input[data-testid="ocfEnterTextTextInput"]', { timeout: 3000 });
+                console.log("Final email verification prompt detected, entering email...");
+                await page.type('input[data-testid="ocfEnterTextTextInput"]', credentials.email, { delay: 650 });
+                console.log("Email entered successfully again");
+                await randomDelay(2000, 3000);
+                
+                console.log("Clicking next button after entering final email...");
+                await page.waitForSelector('button[data-testid="ocfEnterTextNextButton"]', { timeout: 5000 });
+                await page.click('button[data-testid="ocfEnterTextNextButton"]');
+                await randomDelay(2000, 3000);
+            } catch (err) {
+                console.log("Final email verification not required.");
+            }
         } catch (error) {
             console.error("Error during login process:", error);
         }
@@ -154,16 +193,14 @@ async function composeAndPostTweet(page, post) {
         console.log("Preparing to upload image...");
         const absoluteImagePath = path.resolve(imagePath);
         
-        // Wait for media button and click
+        // Wait for and click the media button to ensure the file input is available
+        await page.waitForSelector('button[aria-label="Add photos or video"]', { timeout: 5000 });
         await page.click('button[aria-label="Add photos or video"]');
         await randomDelay(1000, 2000);
         
-        // Handle file upload
-        const [fileChooser] = await Promise.all([
-            page.waitForEvent('filechooser'),
-            page.click('input[type="file"]')
-        ]);
-        await fileChooser.setFiles(absoluteImagePath);
+        // Use setInputFiles to directly upload the image using the file input selector
+        await page.waitForSelector('input[data-testid="fileInput"]', { timeout: 5000 });
+        await page.setInputFiles('input[data-testid="fileInput"]', absoluteImagePath);
         console.log("Image uploaded successfully");
         await randomDelay(3000, 5000);
     }

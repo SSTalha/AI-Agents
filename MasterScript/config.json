@@ -47,7 +47,8 @@
     "browser_profile_name": "Profile 17",
     "credentials": {
       "username": "noty_mankind",
-      "password": "cheema.omni@001"
+      "password": "cheema.omni@001",
+      "email": "alicheema.omni@gmail.com"
     },
     "ContentScheduler": {
       "enabled": true,
