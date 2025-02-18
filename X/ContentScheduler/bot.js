@@ -148,6 +148,21 @@ async function runBot() {
         
         await composeAndPostTweet(page, post);
         
+        // Add a random delay of 6 to 12 seconds after posting
+        randomDelay(5000, 12000);
+        // Attempt to close the popup if it appears
+        try {
+            console.log("Checking for popup close button...");
+            await page.waitForSelector('button[data-testid="app-bar-close"]', { timeout: 5000 });
+            console.log("Popup detected, clicking close button...");
+            await page.click('button[data-testid="app-bar-close"]');
+            console.log("Popup closed successfully.");
+        } catch (error) {
+            console.log("No popup detected, refreshing the page...");
+            await page.reload();
+            await page.waitForTimeout(3200);
+        }
+
         if (idx < posts.length - 1) {
             console.log("Waiting 10 seconds before next tweet...");
             await new Promise(res => setTimeout(res, 10000));
