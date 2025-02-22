@@ -136,32 +136,30 @@ async function uploadAndSharePost(page, post) {
     await randomDelay(3000, 5000);
 
     console.log("Looking for share button in post modal...");
-    
-    // Check if it's a video file
-    const isVideoFile = ['.mp4', '.mov'].includes(path.extname(absoluteImagePath).toLowerCase());
-    
-    if (isVideoFile) {
-        await page.waitForSelector('div[role="button"]:has-text("Share")', { timeout: 15000 });
-        await page.click('div[role="button"]:has-text("Share")');
-        console.log("Clicked share button for video post");
-    } else {
-        // Existing logic for image posts
-        await page.evaluate(() => {
-            const headings = Array.from(document.querySelectorAll('div[role="heading"]'));
-            const postModalHeading = headings.find(heading => heading.textContent.includes('Create new post'));
-            if (!postModalHeading) throw new Error('Post modal heading not found');
-            const modalContainer = postModalHeading.closest('div[role="dialog"]');
-            if (!modalContainer) throw new Error('Modal container not found');
-            const buttons = Array.from(modalContainer.querySelectorAll('div[role="button"]'));
-            const shareButton = buttons.find(button => button.textContent.includes('Share'));
-            if (shareButton) {
-                shareButton.click();
-            } else {
-                throw new Error('Share button not found in post modal');
-            }
-        });
-        console.log("Clicked share button");
-    }
+
+    await page.waitForSelector('div[role="dialog"]', { timeout: 45000 });
+
+    await page.evaluate(() => {
+        // Find the post modal by looking for a heading that contains "Create new post"
+        const headings = Array.from(document.querySelectorAll('div[role="heading"]'));
+        const postModalHeading = headings.find(heading => 
+            heading.textContent.includes('Create new post') || 
+            heading.textContent.includes('New reel')
+        );
+        if (!postModalHeading) throw new Error('Post modal heading not found or does not match expected text');
+        
+        const modalContainer = postModalHeading.closest('div[role="dialog"]');
+        if (!modalContainer) throw new Error('Modal container not found');
+        
+        const buttons = Array.from(modalContainer.querySelectorAll('div[role="button"]'));
+        const shareButton = buttons.find(button => button.textContent.includes('Share'));
+        if (shareButton) {
+             shareButton.click();
+        } else {
+             throw new Error('Share button not found in post modal');
+        }
+    });
+    console.log("Clicked share button");
 
     console.log("Image/Video posted to Instagram successfully!");
 }
@@ -181,7 +179,6 @@ async function runBot() {
         return;
     }
     const chromeProfilePath = getChromeProfilePath(browser_profile_name);
-    // Normalize config to an array even for single posts.
     const posts = Array.isArray(config) ? config.sort((a, b) => new Date(a.postTime) - new Date(b.postTime)) : [config];
     if (!posts[0].filePath) {
         console.error("No image path provided in configuration.");
@@ -198,45 +195,50 @@ async function runBot() {
         await page.goto('https://www.instagram.com');
         await page.waitForTimeout(3000);
 
-        // Attempt login: Try both username field variants
-        try {
-            console.log("Checking for username field in login form...");
-            
-            // Try first variant
+        // Check if login is required by detecting the presence of a login input field.
+        // Instagram presents either the first or second variant of the username field during login.
+        let loginInput = await page.$('input[aria-label="Phone number, username, or email"]');
+        let loginVariant = 'first';
+        if (!loginInput) {
+            loginInput = await page.$('input[name="email"]');
+            loginVariant = 'second';
+        }
+
+        if (loginInput) {
+            console.log("Login required: username field found. Attempting login.");
             try {
-                await page.waitForSelector('input[aria-label="Phone number, username, or email"]', { timeout: 5000 });
-                console.log("Found first variant of username field. Typing username...");
-                await page.type('input[aria-label="Phone number, username, or email"]', credentials.username, { delay: 650 });
-                console.log("Username entered successfully in first variant.");
-                randomDelay(2000, 4000)
+                if (loginVariant === 'first') {
+                    console.log("Found first variant of username field. Typing username...");
+                    await page.type('input[aria-label="Phone number, username, or email"]', credentials.username, { delay: 650 });
+                    console.log("Username entered successfully in first variant.");
+                    await randomDelay(2000, 4000);
 
-                // Password input for first variant
-                await page.type('input[aria-label="Password"]', credentials.password, { delay: 850 });
-                console.log("Password entered successfully in first variant.");
-                randomDelay(2000, 4000)
+                    console.log("Typing password...");
+                    await page.type('input[aria-label="Password"]', credentials.password, { delay: 850 });
+                    console.log("Password entered successfully in first variant.");
+                    await randomDelay(2000, 4000);
 
-                await page.click('button[type="submit"]:has-text("Log in")');
-                console.log("Clicked login button in first variant");
-            
+                    await page.click('button[type="submit"]:has-text("Log in")');
+                    console.log("Clicked login button in first variant");
+                } else {
+                    console.log("Found second variant of username field. Typing username...");
+                    await page.type('input[name="email"]', credentials.username, { delay: 650 });
+                    console.log("Username entered successfully in second variant.");
+                    await randomDelay(2000, 4000);
+
+                    console.log("Typing password...");
+                    await page.type('input[name="pass"]', credentials.password, { delay: 850 });
+                    console.log("Password entered successfully in second variant.");
+                    await randomDelay(2000, 4000);
+
+                    await page.click('div[role="button"]:has-text("Log in")');
+                    console.log("Clicked login button in second variant");
+                }
             } catch (error) {
-                // If first variant fails, try second variant
-                console.log("First variant not found, trying second variant...");
-                await page.waitForSelector('input[name="email"]', { timeout: 5000 });
-                console.log("Found second variant of username field. Typing username...");
-                await page.type('input[name="email"]', credentials.username, { delay: 650 });
-                console.log("Username entered successfully in second variant.");
-                randomDelay(2000, 4000)
-
-                // Password input for second variant
-                await page.type('input[name="pass"]', credentials.password, { delay: 850 });
-                console.log("Password entered successfully in second variant.");
-                randomDelay(2000, 4000)
-
-                await page.click('div[role="button"]:has-text("Log in")');
-                console.log("Clicked login button in second variant");
+                console.log("Login attempt error:", error);
             }
-        } catch (error) {
-            console.log("Neither username field variant appeared. Skipping login attempt.", error);
+        } else {
+            console.log("User already logged in. Skipping login process.");
         }
     };
 
