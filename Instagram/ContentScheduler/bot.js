@@ -140,13 +140,19 @@ async function uploadAndSharePost(page, post) {
     await page.waitForSelector('div[role="dialog"]', { timeout: 45000 });
 
     await page.evaluate(() => {
-        // Find the post modal by looking for a heading that contains "Create new post"
-        const headings = Array.from(document.querySelectorAll('div[role="heading"]'));
-        const postModalHeading = headings.find(heading => 
-            heading.textContent.includes('Create new post') || 
-            heading.textContent.includes('New reel')
-        );
-        if (!postModalHeading) throw new Error('Post modal heading not found or does not match expected text');
+        let postModalHeading = null;
+        for (const heading of document.querySelectorAll('div[role="heading"]')) {
+            if (
+                heading.textContent.includes('Create new post') || 
+                heading.textContent.includes('New reel')
+            ) {
+                postModalHeading = heading;
+                break;
+            }
+        }
+        if (!postModalHeading) {
+            throw new Error('Post modal heading not found or does not match expected text');
+        }
         
         const modalContainer = postModalHeading.closest('div[role="dialog"]');
         if (!modalContainer) throw new Error('Modal container not found');
