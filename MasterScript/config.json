@@ -16,7 +16,7 @@
             {
                 "postTime": "2025-02-15 05:40",
                 "postContent": "Another milestone achieved!",
-                "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\goku.jpeg"
+                "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\luffy.jpeg"
             }
         ]
     }
@@ -36,9 +36,9 @@
                   "caption": "milestones are very important for children"
               },
               {
-                  "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\goku.jpeg",
+                  "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\luffy.jpeg",
                   "postTime": "2025-02-15 04:18",
-                  "caption": "Goku is the goat!"
+                  "caption": "Luffy is the goat!"
               }
           ]
       }
@@ -61,7 +61,7 @@
         {
           "postTime": "2025-02-15 05:40",
           "tweetContent": "Another milestone achieved! #success",
-          "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\goku.jpeg"
+          "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\luffy.jpeg"
         }
       ]
     }
@@ -73,7 +73,7 @@
         "password": "Link@1232"
     },
     "ContentScheduler": {
-        "enabled": true,
+        "enabled": false,
         "config": [
             {
                 "postTime": "2025-02-18 22:20",
@@ -81,6 +81,28 @@
                 "imagePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\mile.png"
             }
         ]
+    }
+  },
+  "tiktok": {
+    "browser_profile_name": "Profile 17",
+    "credentials": {
+      "username": "limo.service788@gmail.com",
+      "password": "limo.tik@tok.788"
+    },
+    "ContentScheduler": {
+      "enabled": true,
+      "config": [
+        {
+          "postTime": "2025-02-15 06:00",
+          "videoPath": "C:\\Users\\Talha\\Desktop\\sample\\video1.mp4",
+          "caption": "This is my first TikTok post!"
+        },
+        {
+          "postTime": "2025-02-15 06:05",
+          "videoPath": "C:\\Users\\Talha\\Desktop\\sample\\video2.mp4",
+          "caption": "Another TikTok video!"
+        }
+      ]
     }
   }
 }

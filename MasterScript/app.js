@@ -11,12 +11,13 @@ const { runEngagementBot } = require('./Engagement');
 (async function main() {
   const tasks = [];
 
-  // Check if any ContentScheduler is enabled in either Facebook or Instagram
+  // Check if any ContentScheduler is enabled in either Facebook, Instagram, X, LinkedIn, or TikTok
   if (
     (config.facebook?.ContentScheduler && config.facebook.ContentScheduler.enabled) ||
     (config.instagram?.ContentScheduler && config.instagram.ContentScheduler.enabled) ||
     (config.x?.ContentScheduler && config.x.ContentScheduler.enabled) ||
-    (config.linkedin?.ContentScheduler && config.linkedin.ContentScheduler.enabled)
+    (config.linkedin?.ContentScheduler && config.linkedin.ContentScheduler.enabled) ||
+    (config.tiktok?.ContentScheduler && config.tiktok.ContentScheduler.enabled)
   ) {
     tasks.push(runContentScheduler(config));
   }
@@ -27,16 +28,6 @@ const { runEngagementBot } = require('./Engagement');
     (config.instagram?.EngagementBot && config.instagram.EngagementBot.enabled) ||
     (config.x?.EngagementBot && config.x.EngagementBot.enabled)
   ) {
-    tasks.push(runEngagementBot(config));
-  }
-
-  // Check if any ContentScheduler is enabled in X
-  if (config.x?.ContentScheduler && config.x.ContentScheduler.enabled) {
-    tasks.push(runContentScheduler(config));
-  }
-
-  // Check if any EngagementBot is enabled in X
-  if (config.x?.EngagementBot && config.x.EngagementBot.enabled) {
     tasks.push(runEngagementBot(config));
   }
 
