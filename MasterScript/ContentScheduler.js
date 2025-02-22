@@ -85,6 +85,34 @@ const groupXPosts = (posts, botConfig) => {
   }));
 };
 
+// Group TikTok posts if multiple posts are scheduled within a 5-minute gap
+const groupTikTokPosts = (posts, botConfig) => {
+  const sortedPosts = (Array.isArray(posts) ? posts : [posts])
+    .sort((a, b) => new Date(a.postTime) - new Date(b.postTime));
+
+  const groupedPosts = sortedPosts.reduce((groups, post) => {
+    const lastGroup = groups[groups.length - 1];
+    if (!lastGroup || (new Date(post.postTime) - new Date(lastGroup[0].postTime) > 300000)) {
+      groups.push([post]);
+    } else {
+      lastGroup.push(post);
+    }
+    return groups;
+  }, []);
+
+  return groupedPosts.map((group, index) => ({
+    botPath: path.join(__dirname, '../Tiktok/ContentScheduler/bot.js'),
+    botConfig: {
+      ...botConfig.tiktok.ContentScheduler,
+      config: group.length === 1 ? group[0] : group,
+      credentials: botConfig.tiktok.credentials,
+      browser_profile_name: botConfig.tiktok.browser_profile_name,
+      scheduledTime: group[0].postTime
+    },
+    botName: `TikTok ContentScheduler Post ${group.length > 1 ? `Group ${index + 1}` : index + 1}`
+  }));
+};
+
 const buildBotQueuesByPlatform = (botConfig) => {
   // Create individual queues for each platform.
   const facebookTask = createBotTask('facebook', 'ContentScheduler', '../Facebook/ContentScheduler/bot.js', botConfig);
@@ -95,6 +123,9 @@ const buildBotQueuesByPlatform = (botConfig) => {
     ? groupXPosts(botConfig.x.ContentScheduler.config, botConfig)
     : [];
   const linkedinTask = createBotTask('linkedin', 'ContentScheduler', '../Linkedin/ContentScheduler/bot.js', botConfig);
+  const tiktokTasks = botConfig.tiktok?.ContentScheduler?.enabled
+    ? groupTikTokPosts(botConfig.tiktok.ContentScheduler.config, botConfig)
+    : [];
 
   const queues = {};
   
@@ -109,6 +140,9 @@ const buildBotQueuesByPlatform = (botConfig) => {
   }
   if (linkedinTask) {
     queues.linkedin = [linkedinTask];
+  }
+  if (tiktokTasks.length > 0) {
+    queues.tiktok = tiktokTasks;
   }
   return queues;
 };

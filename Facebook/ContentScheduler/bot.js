@@ -28,7 +28,7 @@ function randomDelay(min = 5000, max = 9000) {
  * Creates a Facebook post with the given content and image
  */
 async function createPost(page, post) {
-    const { postContent, imagePath } = post;
+    const { postContent, filePath } = post;
     console.log("Creating new post...");
     
     // Wait for and click the post creation button
@@ -50,7 +50,7 @@ async function createPost(page, post) {
     }
     
     // If we have an image to upload
-    if (imagePath) {
+    if (filePath) {
         console.log("Preparing to upload image...");
         
         // Click "Add to your post"
@@ -66,7 +66,7 @@ async function createPost(page, post) {
         // Wait for file input and upload image
         try {
             console.log("Uploading image...");
-            const absoluteImagePath = path.resolve(imagePath);
+            const absoluteImagePath = path.resolve(filePath);
             
             // Look for file input
             const fileInputElement = await page.$('input[type="file"]');
@@ -83,7 +83,7 @@ async function createPost(page, post) {
             }
             
             console.log("Image uploaded successfully");
-            await randomDelay(5000, 10000); // Wait for image to upload
+            await randomDelay(5000, 10000);
         } catch (error) {
             console.error("Error uploading image:", error);
             throw error;

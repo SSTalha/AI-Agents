@@ -38,7 +38,7 @@ async function runBot() {
     
     // Normalize config to an array even for a single post.
     const posts = Array.isArray(config) ? config.sort((a, b) => new Date(a.postTime) - new Date(b.postTime)) : [config];
-    if (!posts[0].tweetContent && !posts[0].imagePath) {
+    if (!posts[0].tweetContent && !posts[0].filePath) {
         console.error("No tweet content or image provided in configuration.");
         return;
     }
@@ -66,12 +66,12 @@ async function runBot() {
             await page.waitForSelector('input[autocomplete="username"][name="text"]', { timeout: 5000 });
             await page.type('input[autocomplete="username"][name="text"]', credentials.username, { delay: 650 });
             console.log("Username entered successfully");
-            await randomDelay(2000, 3000);
+            await randomDelay(2200, 3100);
             
             console.log("Looking for next button...");
             await page.waitForSelector('button:has-text("Next")', { timeout: 5000 });
             await page.click('button:has-text("Next")');
-            await randomDelay(2000, 3000);
+            await randomDelay(1800, 3200);
             
             // Check if extra email verification is required (first email prompt)
             let emailVerificationRequired = false;
@@ -87,12 +87,12 @@ async function runBot() {
                 console.log("Email field detected, entering email for verification...");
                 await page.type('input[data-testid="ocfEnterTextTextInput"]', credentials.email, { delay: 650 });
                 console.log("Email entered successfully");
-                await randomDelay(2000, 3000);
+                await randomDelay(2200, 3200);
                 
                 console.log("Looking for next button...");
                 await page.waitForSelector('button:has-text("Next")', { timeout: 5000 });
                 await page.click('button:has-text("Next")');
-                await randomDelay(2000, 3000);
+                await randomDelay(2500, 3300);
             }
             
             console.log("Looking for password field...");
@@ -118,7 +118,7 @@ async function runBot() {
                 console.log("Clicking next button after entering final email...");
                 await page.waitForSelector('button[data-testid="ocfEnterTextNextButton"]', { timeout: 5000 });
                 await page.click('button[data-testid="ocfEnterTextNextButton"]');
-                await randomDelay(2000, 3000);
+                await randomDelay(2200, 3500);
             } catch (err) {
                 console.log("Final email verification not required.");
             }
@@ -148,7 +148,7 @@ async function runBot() {
         
         await composeAndPostTweet(page, post);
         
-        // Add a random delay of 6 to 12 seconds after posting
+        // Add a random delay of 5 to 12 seconds after posting
         randomDelay(5000, 12000);
         // Attempt to close the popup if it appears
         try {
@@ -168,7 +168,7 @@ async function runBot() {
             await new Promise(res => setTimeout(res, 10000));
             console.log("Refreshing X for next tweet.");
             await page.reload();
-            await page.waitForTimeout(3000);
+            await page.waitForTimeout(2800);
         }
         lastScheduledTime = scheduledTime;
     }
@@ -184,16 +184,15 @@ async function runBot() {
  * Contains the full UI flow to compose and post a tweet.
  * This function uses an already launched page (already logged-in, etc).
  * @param {import('playwright').Page} page - The Playwright page instance.
- * @param {Object} post - Post details containing tweetContent and imagePath.
+ * @param {Object} post - Post details containing tweetContent and filePath.
  */
 async function composeAndPostTweet(page, post) {
-    const { tweetContent, imagePath } = post;
+    const { tweetContent, filePath } = post;
     
     console.log("Initiating new tweet...");
     await page.click('a[href="/compose/post"][aria-label="Post"]');
     await randomDelay(3000, 5000);
 
-    // Handle text content
     if (tweetContent && tweetContent.trim()) {
         console.log("Entering tweet content...");
         const tweetInputSelector = 'div[aria-label="Post text"][role="textbox"]';
@@ -203,10 +202,9 @@ async function composeAndPostTweet(page, post) {
         await randomDelay(2000, 3000);
     }
 
-    // Handle image upload if provided
-    if (imagePath && imagePath.trim()) {
+    if (filePath && filePath.trim()) {
         console.log("Preparing to upload image...");
-        const absoluteImagePath = path.resolve(imagePath);
+        const absoluteImagePath = path.resolve(filePath);
         
         // Wait for and click the media button to ensure the file input is available
         await page.waitForSelector('button[aria-label="Add photos or video"]', { timeout: 5000 });
@@ -218,9 +216,14 @@ async function composeAndPostTweet(page, post) {
         await page.setInputFiles('input[data-testid="fileInput"]', absoluteImagePath);
         console.log("Image uploaded successfully");
         await randomDelay(3000, 5000);
+
+        // After uploading the file for a tweet…
+        if (['.mp4', '.mov'].includes(path.extname(absoluteImagePath).toLowerCase())) {
+            console.log("Video detected, waiting for processing...");
+            await randomDelay(10000, 20000);
+        }
     }
 
-    // Post the tweet
     console.log("Looking for tweet button...");
     await page.click('button[data-testid="tweetButton"]:has-text("Post")');
     console.log("Tweet posted successfully!");

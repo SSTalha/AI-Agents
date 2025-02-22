@@ -11,12 +11,12 @@
             {
                 "postTime": "2025-02-15 05:35",
                 "postContent": "milestones are very important for children",
-                "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg"
+                "filePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg"
             },
             {
                 "postTime": "2025-02-15 05:40",
                 "postContent": "Another milestone achieved!",
-                "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\goku.jpeg"
+                "filePath": "C:\\Users\\Talha\\Desktop\\sample\\luffy.jpeg"
             }
         ]
     }
@@ -24,22 +24,27 @@
   "instagram": {
     "browser_profile_name": "Profile 17",
     "credentials": {
-          "username": "J__Pa",
-          "password": "limo@ins"
+          "username": "J__Paul_Brandout",
+          "password": "limo@insta.acc"
     },
     "ContentScheduler": {
-          "enabled": false,
+          "enabled": true,
           "config": [
               {
-                  "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg",
+                  "filePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg",
                   "postTime": "2025-02-15 04:16",
                   "caption": "milestones are very important for children"
               },
               {
-                  "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\goku.jpeg",
+                  "filePath": "C:\\Users\\Talha\\Desktop\\sample\\video1.mp4",
                   "postTime": "2025-02-15 04:18",
-                  "caption": "Goku is the goat!"
-              }
+                  "caption": "Rick's humour is something."
+              },
+              {
+                "filePath": "C:\\Users\\Talha\\Desktop\\sample\\luffy.jpeg",
+                "postTime": "2025-02-15 04:22",
+                "caption": "Luffy is the goat!"
+            }
           ]
       }
   },
@@ -54,14 +59,19 @@
       "enabled": false,
       "config": [
         {
-          "postTime": "2025-02-15 05:35",
+          "postTime": "2025-02-15 04:15",
           "tweetContent": "Milestones are very important for children!",
-          "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg"
+          "filePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg"
         },
         {
-          "postTime": "2025-02-15 05:40",
-          "tweetContent": "Another milestone achieved! #success",
-          "imagePath": "C:\\Users\\Talha\\Desktop\\sample\\goku.jpeg"
+          "filePath": "C:\\Users\\Talha\\Desktop\\sample\\video1.mp4",
+          "postTime": "2025-02-15 04:18",
+          "tweetContent": "Rick's humour is something."
+      },
+        {
+          "postTime": "2025-02-15 04:20",
+          "tweetContent": "Another milestone achieved!",
+          "filePath": "C:\\Users\\Talha\\Desktop\\sample\\luffy.jpeg"
         }
       ]
     }
@@ -73,14 +83,36 @@
         "password": "Link@1232"
     },
     "ContentScheduler": {
-        "enabled": true,
+        "enabled": false,
         "config": [
             {
                 "postTime": "2025-02-18 22:20",
                 "postContent": "hello this is my a info",
-                "imagePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\mile.png"
+                "filePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\mile.png"
             }
         ]
+    }
+  },
+  "tiktok": {
+    "browser_profile_name": "Profile 17",
+    "credentials": {
+      "username": "limo.service788@gmail.com",
+      "password": "limo.tik@tok.788"
+    },
+    "ContentScheduler": {
+      "enabled": false,
+      "config": [
+        {
+          "postTime": "2025-02-15 06:00",
+          "filePath": "C:\\Users\\Talha\\Desktop\\sample\\video1.mp4",
+          "caption": "This is my first TikTok post!"
+        },
+        {
+          "postTime": "2025-02-15 06:05",
+          "filePath": "C:\\Users\\Talha\\Desktop\\sample\\video2.mp4",
+          "caption": "Another TikTok video!"
+        }
+      ]
     }
   }
 }
