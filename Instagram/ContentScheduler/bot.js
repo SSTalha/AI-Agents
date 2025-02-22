@@ -36,10 +36,10 @@ function randomDelay(min = 3000, max = 8000) {
  * This function uses an already launched page (already logged-in, etc).
  *
  * @param {import('playwright').Page} page - The Playwright page instance.
- * @param {Object} post - Post details containing imagePath and caption.
+ * @param {Object} post - Post details containing filePath and caption.
  */
 async function uploadAndSharePost(page, post) {
-    const { imagePath, caption } = post;
+    const { filePath, caption } = post;
     
     console.log("Initiating new post...");
     await page.click('span:has-text("Create")');
@@ -67,18 +67,18 @@ async function uploadAndSharePost(page, post) {
     }
 
     console.log("Waiting for file input...");
-    randomDelay(1000 , 2000)
+    await randomDelay(1000, 2000);
     await page.waitForSelector('button:has-text("Select from computer")', { 
         timeout: 60000,
         state: 'visible'
     });
 
-    const absoluteImagePath = path.resolve(imagePath);
-    const fileInputElement = await page.$('input[type="file"]');
+    const absoluteImagePath = path.resolve(filePath);
 
+    const fileInputElement = await page.$('input[type="file"]');
     if (fileInputElement) {
         await page.setInputFiles('input[type="file"]', absoluteImagePath);
-        console.log("Uploading image using the file input element.");
+        console.log("Uploading file using the file input element.");
     } else {
         const [fileChooser] = await Promise.all([
             page.waitForEvent('filechooser'),
@@ -86,7 +86,22 @@ async function uploadAndSharePost(page, post) {
         ]);
         await randomDelay(3000, 5000);
         await fileChooser.setFiles(absoluteImagePath);
-        console.log("Uploading image using the file chooser event.");
+        console.log("Uploading file using the file chooser event.");
+    }
+
+    // Check for the OK button after uploading the video
+    const okButtonSelector = 'button:has-text("OK")';
+    try {
+        await page.waitForSelector(okButtonSelector, { timeout: 5000 });
+        await page.click(okButtonSelector);
+        console.log("Clicked OK button after video upload.");
+    } catch (error) {
+        console.log("OK button not found, proceeding without clicking it.");
+    }
+
+    if (['.mp4', '.mov'].includes(path.extname(absoluteImagePath).toLowerCase())) {
+        console.log("Detected video file, waiting extra time for processing...");
+        await randomDelay(10000, 20000);
     }
 
     await randomDelay();
@@ -121,23 +136,34 @@ async function uploadAndSharePost(page, post) {
     await randomDelay(3000, 5000);
 
     console.log("Looking for share button in post modal...");
-    await page.evaluate(() => {
-        const headings = Array.from(document.querySelectorAll('div[role="heading"]'));
-        const postModalHeading = headings.find(heading => heading.textContent.includes('Create new post'));
-        if (!postModalHeading) throw new Error('Post modal heading not found');
-        const modalContainer = postModalHeading.closest('div[role="dialog"]');
-        if (!modalContainer) throw new Error('Modal container not found');
-        const buttons = Array.from(modalContainer.querySelectorAll('div[role="button"]'));
-        const shareButton = buttons.find(button => button.textContent.includes('Share'));
-        if (shareButton) {
-            shareButton.click();
-        } else {
-            throw new Error('Share button not found in post modal');
-        }
-    });
+    
+    // Check if it's a video file
+    const isVideoFile = ['.mp4', '.mov'].includes(path.extname(absoluteImagePath).toLowerCase());
+    
+    if (isVideoFile) {
+        await page.waitForSelector('div[role="button"]:has-text("Share")', { timeout: 15000 });
+        await page.click('div[role="button"]:has-text("Share")');
+        console.log("Clicked share button for video post");
+    } else {
+        // Existing logic for image posts
+        await page.evaluate(() => {
+            const headings = Array.from(document.querySelectorAll('div[role="heading"]'));
+            const postModalHeading = headings.find(heading => heading.textContent.includes('Create new post'));
+            if (!postModalHeading) throw new Error('Post modal heading not found');
+            const modalContainer = postModalHeading.closest('div[role="dialog"]');
+            if (!modalContainer) throw new Error('Modal container not found');
+            const buttons = Array.from(modalContainer.querySelectorAll('div[role="button"]'));
+            const shareButton = buttons.find(button => button.textContent.includes('Share'));
+            if (shareButton) {
+                shareButton.click();
+            } else {
+                throw new Error('Share button not found in post modal');
+            }
+        });
+        console.log("Clicked share button");
+    }
 
-    console.log("Clicked share button");
-    console.log("Image posted to Instagram successfully!");
+    console.log("Image/Video posted to Instagram successfully!");
 }
 
 /**
@@ -157,7 +183,7 @@ async function runBot() {
     const chromeProfilePath = getChromeProfilePath(browser_profile_name);
     // Normalize config to an array even for single posts.
     const posts = Array.isArray(config) ? config.sort((a, b) => new Date(a.postTime) - new Date(b.postTime)) : [config];
-    if (!posts[0].imagePath) {
+    if (!posts[0].filePath) {
         console.error("No image path provided in configuration.");
         return;
     }

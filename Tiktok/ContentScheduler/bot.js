@@ -38,7 +38,7 @@ async function runBot() {
 
     // Normalize config to an array even for a single post.
     const posts = Array.isArray(config) ? config.sort((a, b) => new Date(a.postTime) - new Date(b.postTime)) : [config];
-    if (!posts[0].videoPath) {
+    if (!posts[0].filePath) {
         console.error("No video path provided in configuration.");
         return;
     }
@@ -131,19 +131,19 @@ async function runBot() {
  * Contains the full UI flow to upload and post a video.
  * This function uses an already launched page (already logged-in, etc).
  * @param {import('playwright').Page} page - The Playwright page instance.
- * @param {Object} post - Post details containing videoPath and caption.
+ * @param {Object} post - Post details containing filePath and caption.
  */
 async function uploadAndPostVideo(page, post) {
-    const { videoPath, caption } = post;
+    const { filePath, caption } = post;
 
     console.log("Initiating new video upload...");
     await page.goto('https://www.tiktok.com/upload');
     await randomDelay(3000, 5000);
 
     // Handle video upload
-    if (videoPath && videoPath.trim()) {
+    if (filePath && filePath.trim()) {
         console.log("Preparing to upload video...");
-        const absoluteVideoPath = path.resolve(videoPath);
+        const absoluteVideoPath = path.resolve(filePath);
 
         // Wait for and click the upload button to ensure the file input is available
         await page.waitForSelector('input[type="file"]', { timeout: 5000 });

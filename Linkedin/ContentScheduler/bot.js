@@ -27,7 +27,7 @@ function randomDelay(min = 3000, max = 8000) {
  * Creates a LinkedIn post with the given content and image
  */
 async function createPost(page, post) {
-    const { postContent, imagePath } = post;
+    const { postContent, filePath } = post;
     console.log("Creating new post...");
     
     // Wait for and click the post creation button using text content
@@ -49,15 +49,14 @@ async function createPost(page, post) {
     await randomDelay();
     
     // If we have an image to upload
-    if (imagePath) {
+    if (filePath) {
         console.log("Preparing to upload image...");
         
         // Click the image upload button
         await page.waitForSelector('button[aria-label="Add a photo"]');
         await randomDelay();
         
-        // Set up file input before clicking the button
-        const absoluteImagePath = path.resolve(imagePath);
+        const absoluteImagePath = path.resolve(filePath);
         
         try {
             console.log("Uploading image...");
@@ -87,6 +86,8 @@ async function createPost(page, post) {
             console.error("Error uploading image:", error);
             throw error;
         }
+        
+        console.log("Successfully loaded LinkedIn feed!");
     }
 
     await randomDelay();
