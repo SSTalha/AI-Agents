@@ -32,7 +32,7 @@
           "config": [
               {
                   "filePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg",
-                  "postTime": "2025-02-15 04:16",
+                  "postTime": "2025-02-15 04:15",
                   "caption": "milestones are very important for children"
               },
               {
@@ -42,37 +42,47 @@
               },
               {
                 "filePath": "C:\\Users\\Talha\\Desktop\\sample\\luffy.jpeg",
-                "postTime": "2025-02-15 04:22",
+                "postTime": "2025-02-25 04:30",
                 "caption": "Luffy is the goat!"
-            }
+              },
+              {
+                "filePath": "C:\\Users\\Talha\\Desktop\\sample\\video2.mp4",
+                "postTime": "2025-02-25 04:33",
+                "caption": ""
+              }
           ]
       }
   },
   "x": {
-    "browser_profile_name": "Profile 17",
+    "browser_profile_name": "Profile 23",
     "credentials": {
       "username": "noty_mankind",
       "password": "cheema.omni@001",
       "email": "alicheema.omni@gmail.com"
     },
     "ContentScheduler": {
-      "enabled": false,
+      "enabled": true,
       "config": [
-        {
-          "postTime": "2025-02-15 04:15",
-          "tweetContent": "Milestones are very important for children!",
-          "filePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg"
-        },
-        {
-          "filePath": "C:\\Users\\Talha\\Desktop\\sample\\video1.mp4",
-          "postTime": "2025-02-15 04:18",
-          "tweetContent": "Rick's humour is something."
-      },
-        {
-          "postTime": "2025-02-15 04:20",
-          "tweetContent": "Another milestone achieved!",
-          "filePath": "C:\\Users\\Talha\\Desktop\\sample\\luffy.jpeg"
-        }
+          {
+            "filePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg",
+            "postTime": "2025-02-15 04:15",
+            "caption": "milestones are very important for children"
+          },
+          {
+              "filePath": "C:\\Users\\Talha\\Desktop\\sample\\video1.mp4",
+              "postTime": "2025-02-15 04:18",
+              "caption": "Rick's humour is something."
+          },
+          {
+            "filePath": "C:\\Users\\Talha\\Desktop\\sample\\luffy.jpeg",
+            "postTime": "2025-02-25 04:30",
+            "caption": "Luffy is the goat!"
+          },
+          {
+            "filePath": "C:\\Users\\Talha\\Desktop\\sample\\video2.mp4",
+            "postTime": "2025-02-25 04:33",
+            "caption": ""
+          }
       ]
     }
   },

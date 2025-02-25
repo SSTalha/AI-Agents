@@ -53,17 +53,17 @@ async function runBot() {
         console.log("Browser launched successfully!");
         console.log("Navigating to X...");
         await page.goto('https://x.com');
-        await page.waitForTimeout(3000);
+        await page.waitForTimeout(6000);
         
         // Perform login flow.
         try {
             console.log("Looking for sign in button...");
-            await page.waitForSelector('a[href="/login"]', { timeout: 5000 });
+            await page.waitForSelector('a[href="/login"]', { timeout: 7000 });
             await page.click('a[href="/login"]');
             await randomDelay(2500, 3500);
             
             console.log("Looking for username field...");
-            await page.waitForSelector('input[autocomplete="username"][name="text"]', { timeout: 5000 });
+            await page.waitForSelector('input[autocomplete="username"][name="text"]', { timeout: 6000 });
             await page.type('input[autocomplete="username"][name="text"]', credentials.username, { delay: 650 });
             console.log("Username entered successfully");
             await randomDelay(2200, 3100);
@@ -77,7 +77,7 @@ async function runBot() {
             let emailVerificationRequired = false;
             try {
                 console.log("Checking for email field to determine verification flow...");
-                await page.waitForSelector('input[data-testid="ocfEnterTextTextInput"]', { timeout: 3000 });
+                await page.waitForSelector('input[data-testid="ocfEnterTextTextInput"]', { timeout: 5000 });
                 emailVerificationRequired = true;
             } catch (err) {
                 emailVerificationRequired = false;
@@ -109,7 +109,7 @@ async function runBot() {
             // Handle the case where Twitter asks for email again (final email verification step)
             try {
                 console.log("Checking for final email verification prompt...");
-                await page.waitForSelector('input[data-testid="ocfEnterTextTextInput"]', { timeout: 3000 });
+                await page.waitForSelector('input[data-testid="ocfEnterTextTextInput"]', { timeout: 5000 });
                 console.log("Final email verification prompt detected, entering email...");
                 await page.type('input[data-testid="ocfEnterTextTextInput"]', credentials.email, { delay: 650 });
                 console.log("Email entered successfully again");
@@ -168,7 +168,8 @@ async function runBot() {
             await new Promise(res => setTimeout(res, 10000));
             console.log("Refreshing X for next tweet.");
             await page.reload();
-            await page.waitForTimeout(2800);
+            await page.waitForLoadState('networkidle');
+            console.log("Page fully reloaded. Proceeding with next post...");
         }
         lastScheduledTime = scheduledTime;
     }
