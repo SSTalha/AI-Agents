@@ -28,7 +28,7 @@
           "password": "limo@insta.acc"
     },
     "ContentScheduler": {
-          "enabled": true,
+          "enabled": false,
           "config": [
               {
                   "filePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg",
@@ -94,23 +94,18 @@
     }
   },
   "tiktok": {
-    "browser_profile_name": "Profile 17",
+    "browser_profile_name": "Profile 2",
     "credentials": {
       "username": "limo.service788@gmail.com",
       "password": "limo.tik@tok.788"
     },
     "ContentScheduler": {
-      "enabled": false,
+      "enabled": true,
       "config": [
         {
-          "postTime": "2025-02-15 06:00",
-          "filePath": "C:\\Users\\Talha\\Desktop\\sample\\video1.mp4",
+          "postTime": "2025-02-25 19:41",
+          "filePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\video.mp4",
           "caption": "This is my first TikTok post!"
-        },
-        {
-          "postTime": "2025-02-15 06:05",
-          "filePath": "C:\\Users\\Talha\\Desktop\\sample\\video2.mp4",
-          "caption": "Another TikTok video!"
         }
       ]
     }

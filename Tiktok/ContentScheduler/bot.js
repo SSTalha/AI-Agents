@@ -48,45 +48,101 @@ async function runBot() {
 
     const launchBrowser = async () => {
         if (context) await context.close();
-        context = await chromium.launchPersistentContext(chromeProfilePath, { headless: false, channel: 'chrome' });
+        context = await chromium.launchPersistentContext(chromeProfilePath, { 
+            headless: false, 
+            channel: 'chrome' 
+        });
         page = await context.newPage();
         console.log("Browser launched successfully!");
         console.log("Navigating to TikTok...");
         await page.goto('https://www.tiktok.com');
-        await page.waitForTimeout(4000);
+        await page.waitForTimeout(6000);
 
-        // Perform login flow.
         try {
-            console.log("Looking for login button...");
-            await page.waitForSelector('button[id="header-login-button"]', { timeout: 5000 });
-            await page.click('button[id="header-login-button"]');
-            await randomDelay(2500, 3500);
+            // First check if login modal appears automatically
+            console.log("Checking login status...");
+            const loginModalVisible = await page.waitForSelector('#loginContainer', {
+                timeout: 10000,
+                state: 'visible'
+            }).then(() => true).catch(() => false);
 
-            console.log("Looking for email/username login option...");
-            await page.waitForSelector('a[href="/login/phone-or-email/email"]', { timeout: 5000 });
-            await page.click('a[href="/login/phone-or-email/email"]');
-            await randomDelay(2000, 3200);
+            if (loginModalVisible) {
+                console.log("Login modal detected, need to login first...");
+                console.log("Looking for 'Use phone / email / username' option...");
+                const phoneEmailButton = await page.waitForSelector('div:text("Use phone / email / username")', {
+                    timeout: 10000
+                });
+                
+                if (!phoneEmailButton) {
+                    throw new Error("Could not find 'Use phone / email / username' option");
+                }
+                await phoneEmailButton.click();
+                await randomDelay(2000, 3200);
 
-            console.log("Looking for username/email field...");
-            await page.waitForSelector('input[name="username"]', { timeout: 5000 });
-            await page.type('input[name="username"]', credentials.username, { delay: 650 });
-            console.log("Username/email entered successfully");
-            await randomDelay(2000, 3000);
+                console.log("Looking for email login option...");
+                await page.waitForSelector('a[href="/login/phone-or-email/email"]', { timeout: 10000 });
+                await page.click('a[href="/login/phone-or-email/email"]');
+                await randomDelay(2000, 3200);
 
-            console.log("Looking for password field...");
-            await page.waitForSelector('input[type="password"]', { timeout: 5000 });
-            await page.type('input[type="password"]', credentials.password, { delay: 850 });
-            console.log("Password entered successfully");
-            await randomDelay(2000, 3000);
+                console.log("Looking for username/email field...");
+                await page.waitForSelector('input[name="username"]', { timeout: 10000 });
+                await page.type('input[name="username"]', credentials.username, { delay: 150 });
+                console.log("Username/email entered successfully");
+                await randomDelay(2000, 3000);
 
-            console.log("Clicking login button...");
-            await page.waitForSelector('button[data-e2e="login-button"]', { timeout: 5000 });
-            await page.click('button[data-e2e="login-button"]');
-            console.log("Login attempt completed");
-            await randomDelay(5000, 7000);
+                console.log("Looking for password field...");
+                await page.waitForSelector('input[type="password"]', { timeout: 10000 });
+                await page.type('input[type="password"]', credentials.password, { delay: 150 });
+                console.log("Password entered successfully");
+                await randomDelay(2000, 3000);
+
+                console.log("Clicking login button...");
+                await page.waitForSelector('button[data-e2e="login-button"]', { timeout: 10000 });
+                await page.click('button[data-e2e="login-button"]');
+                console.log("Login attempt completed");
+                await randomDelay(5000, 7000);
+
+                // Verify login was successful by checking for upload button or other authenticated elements
+                const isLoggedIn = await page.waitForSelector('div[data-e2e="upload-icon"]', {
+                    timeout: 10000
+                }).then(() => true).catch(() => false);
+
+                if (!isLoggedIn) {
+                    throw new Error("Login seems to have failed - couldn't find upload button");
+                }
+                
+                console.log("Successfully logged in!");
+            } else {
+                console.log("No login modal detected - we are already logged in!");
+                console.log("Navigating to TikTok Studio upload page...");
+                
+                // Navigate to the upload studio page
+                await page.goto('https://www.tiktok.com/tiktokstudio/upload?from=webapp');
+                await randomDelay(5000, 7000);
+
+                // Verify we're on the upload page
+                const uploadContainer = await page.waitForSelector('[data-e2e="select_video_container"]', {
+                    timeout: 10000,
+                    state: 'visible'
+                });
+
+                if (!uploadContainer) {
+                    throw new Error("Could not access upload page - please check login status");
+                }
+
+                console.log("Successfully accessed TikTok Studio upload page!");
+            }
+
         } catch (error) {
-            console.error("Error during login process:", error);
+            console.error("Error during process:", error);
+            if (page) {
+                await page.screenshot({ path: 'tiktok-error.png', fullPage: true });
+                console.log("Screenshot saved as tiktok-error.png");
+            }
+            throw error;
         }
+
+        return { page, context };
     };
 
     for (const [idx, post] of posts.entries()) {
@@ -137,34 +193,78 @@ async function uploadAndPostVideo(page, post) {
     const { filePath, caption } = post;
 
     console.log("Initiating new video upload...");
-    await page.goto('https://www.tiktok.com/upload');
-    await randomDelay(3000, 5000);
-
+    
     // Handle video upload
     if (filePath && filePath.trim()) {
         console.log("Preparing to upload video...");
         const absoluteVideoPath = path.resolve(filePath);
 
-        // Wait for and click the upload button to ensure the file input is available
-        await page.waitForSelector('input[type="file"]', { timeout: 5000 });
-        await page.setInputFiles('input[type="file"]', absoluteVideoPath);
-        console.log("Video uploaded successfully");
-        await randomDelay(5000, 7000); // Wait for video to process
+        try {
+            // Find the hidden file input and set its file directly
+            const fileInput = await page.$('input[type="file"][accept="video/*"]');
+            if (!fileInput) {
+                throw new Error("Could not find file input element");
+            }
+
+            // Set the file directly without waiting for visibility
+            await fileInput.setInputFiles(absoluteVideoPath);
+            console.log("Video upload initiated");
+            
+            // Wait for upload completion by checking for success status
+            console.log("Waiting for upload to complete...");
+            
+            // Double check that the success message contains "Uploaded"
+            const uploadSuccess = await page.waitForSelector('.info-status.success:has-text("Uploaded")');
+
+            if (!uploadSuccess) {
+                throw new Error("Upload completion status not confirmed");
+            }
+
+            console.log("Video upload confirmed successful");
+            await randomDelay(2000, 3000);
+
+        } catch (error) {
+            console.error("Error during video upload:", error);
+            throw error;
+        }
     }
 
     // Handle caption input
     if (caption && caption.trim()) {
+        console.log("Looking for caption input field...");
+        
+        // Wait for and click the "video" text span
+        await page.$('span[data-text="true"]', { timeout: 10000 });
+        await page.click('span[data-text="true"]');
+        await randomDelay(1000, 2000);
+
+        // Clear existing text using keyboard shortcuts
+        // Use Command/Control + A to select all text
+        await page.keyboard.down(process.platform === 'darwin' ? 'Meta' : 'Control');
+        await page.keyboard.press('a');
+        await page.keyboard.up(process.platform === 'darwin' ? 'Meta' : 'Control');
+        await page.keyboard.press('Backspace');
+        await randomDelay(1000, 2000);
+
+        // Now type the caption
         console.log("Entering caption...");
-        await page.waitForSelector('textarea[placeholder="Describe your video"]', { timeout: 5000 });
-        await page.type('textarea[placeholder="Describe your video"]', caption, { delay: 100 });
+        await page.keyboard.type(caption, { delay: 100 });
         console.log("Caption entered successfully");
         await randomDelay(2000, 3000);
     }
 
     // Post the video
     console.log("Looking for post button...");
-    await page.waitForSelector('button[data-e2e="upload-post"]', { timeout: 5000 });
-    await page.click('button[data-e2e="upload-post"]');
+    await randomDelay(5000, 7000);
+
+    await page.click('button[role="button"]:has-text("Post")');
+
+    // '[data-e2e="post_video_button"]',
+    // 'button[role="button"]:has-text("Post")',
+    // 'button:has-text("Post")',
+    // '.Button__root:has-text("Post")'
+
+
     console.log("Video posted successfully!");
     await randomDelay(5000, 7000); // Wait for post to complete
 }
