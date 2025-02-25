@@ -157,6 +157,7 @@ async function uploadAndSharePost(page, post) {
         const shareButton = buttons.find(button => button.textContent.includes('Share'));
         if (shareButton) {
              shareButton.click();
+             randomDelay(10000, 15000);
         } else {
              throw new Error('Share button not found in post modal');
         }
@@ -195,7 +196,7 @@ async function runBot() {
         console.log("Browser launched successfully!");
         console.log("Navigating to Instagram...");
         await page.goto('https://www.instagram.com');
-        await page.waitForTimeout(3000);
+        await page.waitForTimeout(5000);
 
         // Check if login is required by detecting the presence of a login input field.
         // Instagram presents either the first or second variant of the username field during login.

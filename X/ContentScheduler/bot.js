@@ -147,8 +147,6 @@ async function runBot() {
         }
         
         await composeAndPostTweet(page, post);
-        
-        // Add a random delay of 5 to 12 seconds after posting
         randomDelay(5000, 12000);
         // Attempt to close the popup if it appears
         try {
@@ -200,7 +198,7 @@ async function composeAndPostTweet(page, post) {
         await page.waitForSelector(tweetInputSelector, { timeout: 5000 });
         await page.type(tweetInputSelector, tweetContent, { delay: 100 });
         console.log("Tweet content entered successfully");
-        await randomDelay(2000, 3000);
+        await randomDelay(1000, 3000);
     }
 
     if (filePath && filePath.trim()) {
@@ -228,7 +226,7 @@ async function composeAndPostTweet(page, post) {
     console.log("Looking for tweet button...");
     await page.click('button[data-testid="tweetButton"]:has-text("Post")');
     console.log("Tweet posted successfully!");
-    await randomDelay(3000, 5000);
+    await randomDelay(6200, 12000);
 }
 
 runBot().catch(err => {
