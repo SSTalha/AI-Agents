@@ -111,11 +111,13 @@ async function runBot() {
         await uploadAndPostVideo(page, post);
 
         if (idx < posts.length - 1) {
-            console.log("Waiting 10 seconds before next video...");
+            console.log("Waiting 10 seconds before next post...");
             await new Promise(res => setTimeout(res, 10000));
-            console.log("Refreshing TikTok for next video.");
+            console.log("Reloading page for the next post...");
             await page.reload();
-            await page.waitForTimeout(3000);
+            await page.waitForLoadState('networkidle');
+
+            console.log("Page fully reloaded. Proceeding with next post...");
         }
         lastScheduledTime = scheduledTime;
     }
