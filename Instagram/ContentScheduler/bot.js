@@ -22,10 +22,6 @@ function getChromeProfilePath(profileName) {
     return path.join(baseDir, profileName);
 }
 
-/**
- * Returns a promise that resolves after a random delay.
- * Helps simulate human-like behavior.
- */
 function randomDelay(min = 3000, max = 8000) {
     const delay = Math.floor(Math.random() * (max - min + 1)) + min;
     return new Promise(resolve => setTimeout(resolve, delay));
@@ -271,9 +267,10 @@ async function runBot() {
         if (idx < posts.length - 1) {
             console.log("Waiting 10 seconds before next post...");
             await new Promise(res => setTimeout(res, 10000));
-            console.log("Refreshing Instagram for next post.");
+            console.log("Reloading page for the next post...");
             await page.reload();
-            await page.waitForTimeout(3000);
+            await page.waitForLoadState('networkidle');
+            console.log("Page fully reloaded. Proceeding with next post...");
         }
         lastScheduledTime = scheduledTime;
     }
