@@ -31,71 +31,89 @@ async function createPost(page, post) {
     const { postContent, filePath } = post;
     console.log("Creating new post...");
     
-    // Wait for and click the post creation button
-    await randomDelay();
-    await page.click('div[role="button"] span:has-text("Write something...")');
-    console.log("post button clicked");
-    
-    console.log("Waiting for post modal to load...");
-    await randomDelay(5000, 10000);
-    
-    // Enter post content
-    
-    // Type content with human-like delays
-    for (const char of postContent.split('')) {
-        await page.type('[contenteditable="true"][role="textbox"]', char);
-        await new Promise(resolve => setTimeout(resolve, Math.random() * 300));
-    }
-    
-    // If we have an image to upload
-    if (filePath) {
-        console.log("Preparing to upload image...");
-        
-        // Click "Add to your post"
-        await page.waitForSelector('div[aria-label="Add to your post"]');
+    try {
+        // Wait for and click the post creation button with updated selector
+        const writeButtonSelector = 'div[role="button"] span:has-text("Write something...")';
+        await page.waitForSelector(writeButtonSelector, { timeout: 30000 });
         await randomDelay();
-        // await page.click('div[aria-label="Add to your post"]');
+        await page.click(writeButtonSelector);
+        console.log("Post button clicked");
         
-        // Click Photo/video button
-        await page.waitForSelector('div[aria-label="Photo/video"]');
-        await randomDelay();
-        await page.click('div[aria-label="Photo/video"]');
+        console.log("Waiting for post modal to load...");
+        await randomDelay(5000, 10000);
         
-        // Wait for file input and upload image
-        try {
-            console.log("Uploading image...");
-            const absoluteImagePath = path.resolve(filePath);
-            
-            // Look for file input
-            const fileInputElement = await page.$('input[type="file"]');
-            if (fileInputElement) {
-                await page.setInputFiles('input[type="file"]', absoluteImagePath);
-            } else {
-                // If direct file input is not found, try file chooser event
-                const [fileChooser] = await Promise.all([
-                    page.waitForEvent('filechooser'),
-                    page.click('div[aria-label="Photo/video"]')
-                ]);
-                await randomDelay();
-                await fileChooser.setFiles(absoluteImagePath);
-            }
-            
-            console.log("Image uploaded successfully");
-            await randomDelay(5000, 10000);
-        } catch (error) {
-            console.error("Error uploading image:", error);
-            throw error;
+        // Type content with human-like delays
+        const textboxSelector = 'div[aria-label="Create a public post…"][contenteditable="true"][role="textbox"]';
+        await page.waitForSelector(textboxSelector, { timeout: 30000 });
+        console.log("Found post modal textbox");
+
+        // Clear any existing content first
+        await page.evaluate((selector) => {
+            const element = document.querySelector(selector);
+            if (element) element.innerHTML = '';
+        }, textboxSelector);
+
+        // Type content with human-like delays
+        for (const char of postContent.split('')) {
+            await page.type(textboxSelector, char);
+            await new Promise(resolve => setTimeout(resolve, Math.random() * 300));
         }
+        
+        // If we have an image to upload
+        if (filePath) {
+            console.log("Preparing to upload image...");
+            
+            // Click "Add to your post"
+            await page.waitForSelector('div[aria-label="Add to your post"]');
+            await randomDelay();
+            // await page.click('div[aria-label="Add to your post"]');
+            
+            // Click Photo/video button
+            await page.waitForSelector('div[aria-label="Photo/video"]');
+            await randomDelay();
+            await page.click('div[aria-label="Photo/video"]');
+            
+            // Wait for file input and upload image
+            try {
+                console.log("Uploading image...");
+                const absoluteImagePath = path.resolve(filePath);
+                
+                // Look for file input
+                const fileInputElement = await page.$('input[type="file"]');
+                if (fileInputElement) {
+                    await page.setInputFiles('input[type="file"]', absoluteImagePath);
+                } else {
+                    // If direct file input is not found, try file chooser event
+                    const [fileChooser] = await Promise.all([
+                        page.waitForEvent('filechooser'),
+                        page.click('div[aria-label="Photo/video"]')
+                    ]);
+                    await randomDelay();
+                    await fileChooser.setFiles(absoluteImagePath);
+                }
+                
+                console.log("Image uploaded successfully");
+                await randomDelay(5000, 10000);
+            } catch (error) {
+                console.error("Error uploading image:", error);
+                throw error;
+            }
+        }
+
+        await randomDelay();
+
+        // Click post button
+        await page.click('div[aria-label="Post"][role="button"]');
+        console.log("Post created successfully!");
+        
+        // Wait for post to complete
+        await randomDelay(8000, 12000);
+        
+    } catch (error) {
+        console.error("Error in createPost:", error);
+        await page.screenshot({ path: 'error-screenshot.png' });
+        throw error;
     }
-
-    await randomDelay();
-
-    // Click post button
-    await page.click('div[aria-label="Post"][role="button"]');
-    console.log("Post created successfully!");
-    
-    // Wait for post to complete
-    await randomDelay(8000, 12000);
 }
 
 /**
@@ -174,18 +192,6 @@ async function createGroupPost(page, post, groupUrl) {
     await page.goto(groupUrl);
     await randomDelay(5000, 8000);
 
-    // Wait for the post creation button in the group
-    const createPostSelector = 'div[role="button"] span:has-text("Write something...")';
-    try {
-        await page.waitForSelector(createPostSelector, { timeout: 30000 });
-        await randomDelay();
-        await page.click(createPostSelector);
-    } catch (error) {
-        console.error("Could not find post creation button in group. Trying alternative selector...");
-        // Try alternative selector if the first one fails
-        await page.click('div[role="button"] span:has-text("What\'s on your mind")');
-    }
-    
     // Rest of the post creation logic
     await createPost(page, post);
 }
