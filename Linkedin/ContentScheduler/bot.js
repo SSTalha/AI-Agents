@@ -48,30 +48,44 @@ async function createPost(page, post) {
     await page.type('div[role="textbox"]', postContent, { delay: 100 });
     await randomDelay();
     
-    // If we have an image to upload
+    // If we have a file to upload (image or video)
     if (filePath) {
-        console.log("Preparing to upload image...");
+        console.log("Preparing to upload media...");
         
-        // Click the image upload button
-        await page.waitForSelector('button[aria-label="Add a photo"]');
+        // Determine file type
+        const fileExtension = path.extname(filePath).toLowerCase();
+        const isVideo = ['.mp4', '.mov', '.avi', '.webm'].includes(fileExtension);
+        
+        // Click the appropriate media upload button
+        const mediaButtonSelector = isVideo 
+            ? 'button[aria-label="Add a video"]' 
+            : 'button[aria-label="Add a photo"]';
+        
+        await page.waitForSelector(mediaButtonSelector);
         await randomDelay();
         
-        const absoluteImagePath = path.resolve(filePath);
+        const absoluteMediaPath = path.resolve(filePath);
         
         try {
-            console.log("Uploading image...");
+            console.log(`Uploading ${isVideo ? 'video' : 'image'}...`);
             
             // Handle file chooser event before clicking the button
             const [fileChooser] = await Promise.all([
                 page.waitForEvent('filechooser'),
-                page.click('button[aria-label="Add a photo"]')
+                page.click(mediaButtonSelector)
             ]);
             
             // Set the file in the chooser
-            await fileChooser.setFiles(absoluteImagePath);
+            await fileChooser.setFiles(absoluteMediaPath);
             
-            console.log("Image uploaded successfully");
-            await randomDelay(5000, 8000); // Wait for image to upload
+            console.log("Media uploaded successfully");
+            
+            // Extra wait time for videos
+            if (isVideo) {
+                await randomDelay(10000, 15000); // Longer delay for video processing
+            } else {
+                await randomDelay(5000, 8000);
+            }
             
             // Wait for and click the "Next" button
             const nextButtonSelector = 'button[aria-label="Next"]';
@@ -83,7 +97,7 @@ async function createPost(page, post) {
             await randomDelay(3000, 5000);
             
         } catch (error) {
-            console.error("Error uploading image:", error);
+            console.error(`Error uploading ${isVideo ? 'video' : 'image'}:`, error);
             throw error;
         }
         

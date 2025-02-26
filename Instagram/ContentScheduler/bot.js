@@ -237,6 +237,24 @@ async function runBot() {
                     await page.click('div[role="button"]:has-text("Log in")');
                     console.log("Clicked login button in second variant");
                 }
+                console.log("Waiting 5 seconds for potential 'Save login info' popup...");
+                await page.waitForTimeout(5500);
+
+                try {
+                    console.log("Checking for the 'Save login info' popup...");
+                    await page.waitForSelector('div[aria-label="Save your password"] div[role="button"]:has-text("Save")', { timeout: 5000 });
+                    await page.click('div[aria-label="Save your password"] div[role="button"]:has-text("Save")');
+                    console.log("Clicked the 'Save' button on the login popup.");
+                } catch (saveErr) {
+                    console.log("'Save' button not clickable or not found; checking for 'Not now' button...");
+                    try {
+                        await page.waitForSelector('div[aria-label="Save your password"] div[role="button"]:has-text("Not now")', { timeout: 3000 });
+                        await page.click('div[aria-label="Save your password"] div[role="button"]:has-text("Not now")');
+                        console.log("Clicked the 'Not now' button on the login popup.");
+                    } catch (notNowErr) {
+                        console.log("No login info popup was handled. Continuing with the post flow...");
+                    }
+                }
             } catch (error) {
                 console.log("Login attempt error:", error);
             }
