@@ -61,7 +61,7 @@
       "email": "alicheema.omni@gmail.com"
     },
     "ContentScheduler": {
-      "enabled": true,
+      "enabled": false,
       "config": [
           {
             "filePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg",
@@ -93,13 +93,18 @@
         "password": "Link@1232"
     },
     "ContentScheduler": {
-        "enabled": false,
+        "enabled": true,
         "config": [
-            {
-                "postTime": "2025-02-18 22:20",
-                "postContent": "hello this is my a info",
-                "filePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\mile.png"
-            }
+          {
+            "filePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg",
+            "postTime": "2025-02-15 04:15",
+            "postContent": "milestones are very important for children"
+          },
+          {
+              "filePath": "C:\\Users\\Talha\\Desktop\\sample\\video1.mp4",
+              "postTime": "2025-02-15 04:18",
+              "postContent": "Rick's humour is something."
+          }
         ]
     }
   },
@@ -110,7 +115,7 @@
       "password": "limo.tik@tok.788"
     },
     "ContentScheduler": {
-      "enabled": true,
+      "enabled": false,
       "config": [
         {
           "postTime": "2025-02-25 19:41",
