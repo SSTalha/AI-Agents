@@ -32,16 +32,14 @@ async function createPost(page, post) {
     console.log("Creating new post...");
     
     // Wait for and click the post creation button
-    await page.waitForSelector('div[role="button"] span:has-text("What\'s on your mind")', { timeout: 60000 });
     await randomDelay();
-    await page.click('div[role="button"] span:has-text("What\'s on your mind")');
+    await page.click('div[role="button"] span:has-text("Write something...")');
+    console.log("post button clicked");
     
     console.log("Waiting for post modal to load...");
     await randomDelay(5000, 10000);
     
     // Enter post content
-    await page.waitForSelector('[contenteditable="true"][role="textbox"]', { timeout: 60000 });
-    await randomDelay();
     
     // Type content with human-like delays
     for (const char of postContent.split('')) {
@@ -101,6 +99,98 @@ async function createPost(page, post) {
 }
 
 /**
+ * Fetches and stores joined Facebook groups
+ */
+async function fetchAndUpdateGroups(page) {
+    console.log("Navigating to groups page...");
+    await page.goto('https://www.facebook.com/groups/joins/');
+    await randomDelay(5000, 8000);
+
+    console.log("Waiting for groups to load...");
+    await page.waitForSelector('a[aria-label="View group"]', { timeout: 30000 });
+    await randomDelay();
+
+    const groups = await page.evaluate(() => {
+        const groupLinks = Array.from(document.querySelectorAll('a[aria-label="View group"]'));
+        return groupLinks.map(link => ({
+            url: link.href,
+            lastPosted: null
+        }));
+    });
+
+    console.log(`Found ${groups.length} groups`);
+    if (groups.length === 0) {
+        throw new Error("No groups found! Please ensure you have joined some groups.");
+    }
+
+    // Load existing groups data or create new
+    let groupsData = {};
+    const fs = require('fs');
+    const groupsFilePath = path.join(__dirname, 'groups_history.json');
+
+    try {
+        if (fs.existsSync(groupsFilePath)) {
+            groupsData = JSON.parse(fs.readFileSync(groupsFilePath, 'utf8'));
+        }
+    } catch (error) {
+        console.log("Creating new groups history file.");
+    }
+
+    // Update groups data with new groups
+    groups.forEach(group => {
+        if (!groupsData[group.url]) {
+            groupsData[group.url] = {
+                lastPosted: null
+            };
+        }
+    });
+
+    // Save updated groups data
+    fs.writeFileSync(groupsFilePath, JSON.stringify(groupsData, null, 2));
+    console.log("Groups data updated successfully");
+    
+    return groupsData;
+}
+
+/**
+ * Finds the next eligible group for posting
+ */
+function findNextEligibleGroup(groupsData) {
+    const entries = Object.entries(groupsData);
+    entries.sort((a, b) => {
+        const aTime = a[1].lastPosted ? new Date(a[1].lastPosted) : new Date(0);
+        const bTime = b[1].lastPosted ? new Date(b[1].lastPosted) : new Date(0);
+        return aTime - bTime;
+    });
+    
+    return entries[0]?.[0]; // Returns the URL of the group that hasn't been posted to in the longest time
+}
+
+/**
+ * Creates a post in a specific Facebook group
+ */
+async function createGroupPost(page, post, groupUrl) {
+    console.log(`Navigating to group: ${groupUrl}`);
+    await page.goto(groupUrl);
+    await randomDelay(5000, 8000);
+
+    // Wait for the post creation button in the group
+    const createPostSelector = 'div[role="button"] span:has-text("Write something...")';
+    try {
+        await page.waitForSelector(createPostSelector, { timeout: 30000 });
+        await randomDelay();
+        await page.click(createPostSelector);
+    } catch (error) {
+        console.error("Could not find post creation button in group. Trying alternative selector...");
+        // Try alternative selector if the first one fails
+        await page.click('div[role="button"] span:has-text("What\'s on your mind")');
+    }
+    
+    // Rest of the post creation logic
+    await createPost(page, post);
+}
+
+/**
  * Main function to run the Facebook bot
  */
 async function runBot() {
@@ -111,7 +201,6 @@ async function runBot() {
     }
 
     const chromeProfilePath = getChromeProfilePath(browser_profile_name);
-    // Normalize config to array even for single posts
     const posts = Array.isArray(config) ? config : [config];
     
     if (!posts.length) {
@@ -119,13 +208,14 @@ async function runBot() {
         return;
     }
 
-    // Sort posts by scheduled time
     posts.sort((a, b) => new Date(a.postTime) - new Date(b.postTime));
     
     let context, page, lastScheduledTime;
+    let groupsData = {};
     
-    const launchBrowser = async () => {
-        if (context) await context.close();
+    try {
+        // Launch browser
+        console.log("Launching browser...");
         context = await chromium.launchPersistentContext(chromeProfilePath, { 
             headless: false, 
             channel: 'chrome' 
@@ -133,9 +223,10 @@ async function runBot() {
         page = await context.newPage();
         console.log("Browser launched successfully!");
         
+        // Navigate to Facebook and check login status
         console.log("Navigating to Facebook...");
         await page.goto('https://www.facebook.com');
-        await randomDelay();
+        await randomDelay(3000, 5000);
 
         // Check if login is needed
         const isLoggedIn = await page.waitForSelector('div[role="button"] span:has-text("What\'s on your mind")', { 
@@ -155,65 +246,77 @@ async function runBot() {
             await page.waitForSelector('div[role="button"] span:has-text("What\'s on your mind")', { 
                 timeout: 60000 
             });
-
-            // Refresh the page after logging in
-            await page.reload();
-            await randomDelay();
-
-            // Check for the "Save" login info pop-up and click "Save" if it appears
-            // const saveButtonVisible = await page.waitForSelector('span:has-text("Save")');
-            // if (saveButtonVisible) {
-            //     console.log("Save login info pop-up detected. Clicking 'Save'...");
-            //     await page.click('span:has-text("Save")');
-            //     await randomDelay();
-            // } else {
-            //     console.log("Save login info pop-up not visible. Clicking 'Not now'...");
-            //     await page.waitForSelector('span:has-text("Not now")');
-            //     await page.click('span:has-text("Not now")');
-            //     await randomDelay();
-            // }
+            console.log("Login successful!");
         } else {
             console.log("Already logged in!");
         }
-    };
 
-    for (const [idx, post] of posts.entries()) {
-        const scheduledTime = new Date(post.postTime);
-        
-        // If this is the first post or if more than 5 minutes have passed since last post
-        if (!context || (lastScheduledTime && (scheduledTime - lastScheduledTime > 300000))) {
-            if (context) {
-                console.log("Gap more than 5 minutes detected. Closing current window.");
+        // Fetch groups data
+        console.log("Fetching groups data...");
+        groupsData = await fetchAndUpdateGroups(page);
+        console.log(`Successfully loaded ${Object.keys(groupsData).length} groups`);
+
+        // Verify we have groups
+        if (Object.keys(groupsData).length === 0) {
+            throw new Error("No groups found after fetching. Please ensure you have joined some groups.");
+        }
+
+        // Process posts
+        for (const [idx, post] of posts.entries()) {
+            const scheduledTime = new Date(post.postTime);
+            
+            // Handle scheduling
+            const delay = scheduledTime - new Date();
+            if (delay > 0) {
+                console.log(`Waiting ${(delay / 1000).toFixed(2)} seconds until scheduled time ${scheduledTime}`);
+                await new Promise(res => setTimeout(res, delay));
             }
-            await launchBrowser();
-        } else {
-            console.log("Short gap detected. Preparing for next post.");
-        }
 
-        const delay = scheduledTime - new Date();
-        if (delay > 0) {
-            console.log(`Waiting ${(delay / 1000).toFixed(2)} seconds until scheduled time ${scheduledTime}`);
-            await new Promise(res => setTimeout(res, delay));
-        } else {
-            console.log(`Scheduled time ${scheduledTime} already passed. Posting immediately.`);
+            // Refresh groups data before each post
+            console.log("Refreshing groups data...");
+            groupsData = await fetchAndUpdateGroups(page);
+
+            // Find next eligible group
+            const nextGroupUrl = findNextEligibleGroup(groupsData);
+            if (!nextGroupUrl) {
+                console.log("All groups have been posted to. Resetting posting history...");
+                Object.keys(groupsData).forEach(url => {
+                    groupsData[url].lastPosted = null;
+                });
+                const newGroupUrl = findNextEligibleGroup(groupsData);
+                if (!newGroupUrl) {
+                    throw new Error("No groups available for posting!");
+                }
+                await createGroupPost(page, post, newGroupUrl);
+                groupsData[newGroupUrl].lastPosted = new Date().toISOString();
+            } else {
+                console.log(`Creating post in group: ${nextGroupUrl}`);
+                await createGroupPost(page, post, nextGroupUrl);
+                groupsData[nextGroupUrl].lastPosted = new Date().toISOString();
+            }
+
+            // Save updated groups data
+            require('fs').writeFileSync(
+                path.join(__dirname, 'groups_history.json'), 
+                JSON.stringify(groupsData, null, 2)
+            );
+
+            if (idx < posts.length - 1) {
+                console.log("Waiting before next post...");
+                await randomDelay(15000, 20000);
+            }
+            
+            lastScheduledTime = scheduledTime;
         }
-        
-        await createPost(page, post);
-        
-        if (idx < posts.length - 1) {
-            console.log("Waiting 15 seconds before next post...");
-            await new Promise(res => setTimeout(res, 15000));
-            console.log("Refreshing Facebook for next post.");
-            await page.reload();
-            await randomDelay();
+    } catch (error) {
+        console.error("Error in bot execution:", error);
+        throw error;
+    } finally {
+        if (context) {
+            console.log("Waiting 2 minutes before closing browser...");
+            await new Promise(res => setTimeout(res, 120000));
+            await context.close();
         }
-        lastScheduledTime = scheduledTime;
-    }
-    
-    if (context) {
-        console.log("Waiting 2 minutes before closing browser...");
-        await new Promise(res => setTimeout(res, 120000));
-        await context.close();
     }
 }
 
