@@ -6,7 +6,7 @@
         "password": ":ali.omni@cheema"
     },
     "ContentScheduler": {
-        "enabled": true,
+        "enabled": false,
         "config": [
             {
                 "postTime": "2025-02-26 22:58",
@@ -104,19 +104,24 @@
     }
   },
   "tiktok": {
-    "browser_profile_name": "Profile 2",
+    "browser_profile_name": "Profile 5",
     "credentials": {
       "username": "limo.service788@gmail.com",
       "password": "limo.tik@tok.788"
     },
     "ContentScheduler": {
-      "enabled": false,
+      "enabled": true,
       "config": [
         {
-          "postTime": "2025-02-25 19:41",
-          "filePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\video.mp4",
-          "caption": "This is my first TikTok post!"
-        }
+          "postTime": "2025-02-28 01:25",
+          "filePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\video2.mp4",
+          "caption": "This is my second TikTok post!"
+        },
+        {
+            "postTime": "2025-02-28 01:45",
+            "filePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\video.mp4",
+            "caption": "This is my third TikTok post!"
+          }
       ]
     }
   }
