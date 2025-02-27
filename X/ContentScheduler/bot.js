@@ -162,8 +162,8 @@ async function runBot() {
         }
 
         if (idx < posts.length - 1) {
-            console.log("Waiting 10 seconds before next tweet...");
-            await new Promise(res => setTimeout(res, 10000));
+            console.log("Waiting 8 - 13 seconds before next tweet...");
+            await randomDelay(8000, 13000)
             console.log("Refreshing X for next tweet.");
             await page.reload();
             await page.waitForTimeout(10000);

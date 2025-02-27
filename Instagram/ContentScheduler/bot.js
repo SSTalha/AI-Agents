@@ -284,11 +284,11 @@ async function runBot() {
         await uploadAndSharePost(page, post);
         
         if (idx < posts.length - 1) {
-            console.log("Waiting 10 seconds before next post...");
-            await new Promise(res => setTimeout(res, 10000));
+            console.log("Waiting 8 - 13 seconds before next post...");
+            await randomDelay(8000, 13000)
             console.log("Reloading page for the next post...");
             await page.reload();
-            page.waitForTimeout(8000)
+            page.waitForTimeout(10000)
             console.log("Page fully reloaded. Proceeding with next post...");
         }
         lastScheduledTime = scheduledTime;
