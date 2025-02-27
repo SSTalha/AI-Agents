@@ -3,7 +3,7 @@
     "browser_profile_name": "Profile 5",
     "credentials": {
         "username": "alicheema.omni@gmail.com",
-        "password": ":ali.omni@cheema"
+        "password": "ali.omni@cheema"
     },
     "ContentScheduler": {
         "enabled": true,
@@ -11,12 +11,12 @@
             {
                 "postTime": "2025-02-26 22:58",
                 "postContent": "haha",
-                "filePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\meme1.jpg"
+                "filePath":  "C:\\Users\\Talha\\Desktop\\sample\\video1.mp4"
             },
             {
                 "postTime": "2025-02-26 23:02",
                 "postContent": "haha",
-                "filePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\meme2.png"
+                "filePath": "C:\\Users\\Talha\\Desktop\\sample\\video2.mp4"
             }
         ]
     }
@@ -28,7 +28,7 @@
           "password": "limo@insta.acc"
     },
     "ContentScheduler": {
-          "enabled": false,
+          "enabled": true,
           "config": [
               {
                   "filePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg",

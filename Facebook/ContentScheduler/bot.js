@@ -84,9 +84,15 @@ async function createPost(page, post) {
         
         // Type content with human-like delays
         const textboxSelector = 'div[aria-label="Create a public post…"][contenteditable="true"][role="textbox"]';
-        await page.waitForSelector(textboxSelector, { timeout: 30000 });
-        console.log("Found post modal textbox");
-        page.click(textboxSelector);
+        try {
+            await page.waitForSelector(textboxSelector, { timeout: 60000 });
+            console.log("Found post modal textbox");
+            await page.waitForTimeout(2000);
+            await page.click(textboxSelector);
+        } catch (error) {
+            console.error("Error waiting for textbox:", error);
+            throw error;
+        }
 
 
         // // Clear any existing content first
