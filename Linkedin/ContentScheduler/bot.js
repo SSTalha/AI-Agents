@@ -151,7 +151,8 @@ async function runBot() {
         
         console.log("Navigating to LinkedIn login...");
         await page.goto('https://www.linkedin.com/login');
-        await randomDelay();
+        await page.waitForTimeout(10000);
+
 
         // Check if we're still on the login page
         const currentUrl = page.url();
@@ -178,6 +179,7 @@ async function runBot() {
         if (!canPost) {
             console.log("Retrying navigation to feed...");
             await page.goto('https://www.linkedin.com/feed/');
+            await page.waitForTimeout(10000);
             await page.waitForSelector('button strong:has-text("Start a post")', {
                 timeout: 60000
             });
@@ -214,7 +216,10 @@ async function runBot() {
             await new Promise(res => setTimeout(res, 15000));
             console.log("Refreshing LinkedIn feed for next post.");
             await page.goto('https://www.linkedin.com/feed/');
-            await randomDelay();
+            
+            console.log("Waiting for page to fully load...");
+            await page.waitForLoadState('networkidle');
+            console.log("Page fully loaded. Proceeding with next post.");
         }
         lastScheduledTime = scheduledTime;
     }

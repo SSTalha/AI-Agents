@@ -158,7 +158,7 @@ async function runBot() {
         } catch (error) {
             console.log("No popup detected, refreshing the page...");
             await page.reload();
-            await page.waitForTimeout(3200);
+            await page.waitForLoadState('networkidle');
         }
 
         if (idx < posts.length - 1) {
@@ -166,7 +166,7 @@ async function runBot() {
             await new Promise(res => setTimeout(res, 10000));
             console.log("Refreshing X for next tweet.");
             await page.reload();
-            await page.waitForLoadState('networkidle');
+            await page.waitForTimeout(10000);
             console.log("Page fully reloaded. Proceeding with next post...");
         }
         lastScheduledTime = scheduledTime;

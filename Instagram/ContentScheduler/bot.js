@@ -156,13 +156,13 @@ async function uploadAndSharePost(page, post) {
         const buttons = Array.from(modalContainer.querySelectorAll('div[role="button"]'));
         const shareButton = buttons.find(button => button.textContent.includes('Share'));
         if (shareButton) {
-             shareButton.click();
-             randomDelay(10000, 15000);
+            shareButton.click();
         } else {
              throw new Error('Share button not found in post modal');
         }
     });
     console.log("Clicked share button");
+    await randomDelay(10000, 15000);
 
     console.log("Image/Video posted to Instagram successfully!");
 }
@@ -196,7 +196,7 @@ async function runBot() {
         console.log("Browser launched successfully!");
         console.log("Navigating to Instagram...");
         await page.goto('https://www.instagram.com');
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(10000);
 
         // Check if login is required by detecting the presence of a login input field.
         // Instagram presents either the first or second variant of the username field during login.
@@ -288,7 +288,7 @@ async function runBot() {
             await new Promise(res => setTimeout(res, 10000));
             console.log("Reloading page for the next post...");
             await page.reload();
-            await page.waitForLoadState('networkidle');
+            page.waitForTimeout(8000)
             console.log("Page fully reloaded. Proceeding with next post...");
         }
         lastScheduledTime = scheduledTime;
