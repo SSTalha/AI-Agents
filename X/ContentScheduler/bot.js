@@ -54,6 +54,7 @@ async function runBot() {
         console.log("Navigating to X...");
         await page.goto('https://x.com');
         await page.waitForTimeout(6000);
+
         
         // Perform login flow.
         try {
