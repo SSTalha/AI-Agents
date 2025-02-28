@@ -177,8 +177,7 @@ async function runBot() {
             } catch (error) {
                 console.error("Error during process:", error);
                 if (page) {
-                    await page.screenshot({ path: 'tiktok-error.png', fullPage: true });
-                    console.log("Screenshot saved as tiktok-error.png");
+                    console.log("error came in tiktok");
                 }
                 throw error;
             }

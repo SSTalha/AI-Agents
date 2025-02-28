@@ -245,7 +245,6 @@ async function createPost(page, post) {
     await randomDelay(8000, 12000);
     } catch (error) {
         console.error("Error in createPost:", error);
-        await page.screenshot({ path: 'error-screenshot.png' });
         throw error;
     }
 }
