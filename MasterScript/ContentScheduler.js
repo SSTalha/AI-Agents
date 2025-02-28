@@ -45,7 +45,7 @@ function buildUnifiedTaskQueue(botConfig) {
               config: post,
               credentials: platformConfig.credentials,
               browser_profile_name: platformConfig.browser_profile_name,
-              scheduledTime: post.postTime
+              scheduledTime: new Date(post.postTime.replace(" ", "T")).toISOString()
             },
             botName: `${capitalize(platform)} ContentScheduler Post ${index + 1}`
           });
@@ -58,7 +58,7 @@ function buildUnifiedTaskQueue(botConfig) {
             config: posts,
             credentials: platformConfig.credentials,
             browser_profile_name: platformConfig.browser_profile_name,
-            scheduledTime: posts.postTime
+            scheduledTime: new Date(posts.postTime.replace(" ", "T")).toISOString()
           },
           botName: `${capitalize(platform)} ContentScheduler Post`
         });
