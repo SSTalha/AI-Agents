@@ -6,7 +6,7 @@
         "password": "ali.omni@cheema"
     },
     "ContentScheduler": {
-        "enabled": true,
+        "enabled": false,
         "config": [
             {
                 "postTime": "2025-02-26 22:58",
@@ -28,7 +28,7 @@
           "password": "limo@insta.acc"
     },
     "ContentScheduler": {
-          "enabled": true,
+          "enabled": false,
           "config": [
               {
                 "filePath": "C:\\Users\\Talha\\Desktop\\sample\\luffy.jpeg",
@@ -51,7 +51,7 @@
       "email": "alicheema.omni@gmail.com"
     },
     "ContentScheduler": {
-      "enabled": false,
+      "enabled": true,
       "config": [
           {
             "filePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg",
@@ -83,7 +83,7 @@
         "password": "Link@1232"
     },
     "ContentScheduler": {
-        "enabled": true,
+        "enabled": false,
         "config": [
           {
             "filePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg",

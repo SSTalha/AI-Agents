@@ -1,20 +1,46 @@
 const path = require('path');
 const { chromium } = require('playwright');
 const os = require('os');
+const fs = require('fs');
 
 /**
- * Returns the Chrome user profile directory dynamically.
- * @param {string} profileName - The name of the Chrome profile.
- * @returns {string} The full path to the Chrome profile.
+ * Returns the Chrome user profile base directory.
+ * Note: Do NOT append the profile name here.
+ * The profile (for example: "Profile 23") will be selected via the launch args.
  */
-function getChromeProfilePath(profileName) {
-    const baseDir =
-        process.platform === 'win32'
-            ? path.join(os.homedir(), 'AppData', 'Local', 'Google', 'Chrome', 'User Data')
-            : process.platform === 'darwin'
-            ? path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome')
-            : path.join(os.homedir(), '.config', 'google-chrome');
-    return path.join(baseDir, profileName);
+function getChromeProfilePath() {
+    return process.platform === 'win32'
+        ? path.join(os.homedir(), 'AppData', 'Local', 'Google', 'Chrome', 'User Data')
+        : process.platform === 'darwin'
+        ? path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome')
+        : path.join(os.homedir(), '.config', 'google-chrome');
+}
+
+/**
+ * Returns the Chrome executable path based on the operating system.
+ * Incorporates logic from the Facebook bot.
+ *
+ * @returns {string} The path to Chrome executable.
+ */
+function getChromeExecutablePath() {
+    switch (process.platform) {
+        case 'win32':
+            // Windows: Check both Program Files paths
+            const programFiles = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+            const programFilesX86 = "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe";
+            if (fs.existsSync(programFiles)) return programFiles;
+            if (fs.existsSync(programFilesX86)) return programFilesX86;
+            break;
+        case 'darwin':
+            // macOS
+            return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+        case 'linux':
+            // Linux
+            return '/usr/bin/google-chrome';
+        default:
+            throw new Error(`Unsupported platform: ${process.platform}`);
+    }
+    throw new Error('Chrome executable not found');
 }
 
 /**
@@ -27,7 +53,7 @@ function randomDelay(min = 3000, max = 8000) {
 }
 
 /**
- * Main function to run the Twitter bot.
+ * Main function to run the X (Twitter) bot.
  */
 async function runBot() {
     const { credentials, config, browser_profile_name } = JSON.parse(process.env.BOT_CONFIG || '{}');
@@ -43,12 +69,33 @@ async function runBot() {
         return;
     }
     
-    const chromeProfilePath = getChromeProfilePath(browser_profile_name);
+    const chromeProfilePath = getChromeProfilePath();
     let context, page, lastScheduledTime;
-
+    
     const launchBrowser = async () => {
         if (context) await context.close();
-        context = await chromium.launchPersistentContext(chromeProfilePath, { headless: false, channel: 'chrome' });
+        
+        if (process.platform === 'win32') {
+            try {
+                await require('child_process').execSync('taskkill /F /IM chrome.exe');
+                console.log("Killed existing Chrome processes");
+            } catch (e) {
+                console.log("No existing Chrome processes found");
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+        const executablePath = getChromeExecutablePath();
+        context = await chromium.launchPersistentContext(chromeProfilePath, { 
+            headless: false, 
+            channel: 'chrome',
+            executablePath,
+            args: [
+                `--profile-directory=${browser_profile_name}`,
+                '--disable-blink-features=AutomationControlled',
+                '--start-maximized'
+            ]
+        });
         page = await context.newPage();
         console.log("Browser launched successfully!");
         console.log("Navigating to X...");
@@ -147,7 +194,7 @@ async function runBot() {
         }
         
         await composeAndPostTweet(page, post);
-        randomDelay(5000, 12000);
+        await randomDelay(5000, 12000);
         // Attempt to close the popup if it appears
         try {
             console.log("Checking for popup close button...");
@@ -163,7 +210,7 @@ async function runBot() {
 
         if (idx < posts.length - 1) {
             console.log("Waiting 8 - 13 seconds before next tweet...");
-            await randomDelay(8000, 13000)
+            await randomDelay(8000, 13000);
             console.log("Refreshing X for next tweet.");
             await page.reload();
             await page.waitForTimeout(10000);
