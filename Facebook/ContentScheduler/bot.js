@@ -2,19 +2,149 @@ const path = require('path');
 const { chromium } = require('playwright');
 const os = require('os');
 
-
 /**
  * Returns the Chrome user profile directory dynamically.
+ * @param {string} profileName - The name of the Chrome profile.
+ * @returns {string} The full path to the Chrome profile.
  */
 function getChromeProfilePath(profileName) {
-    const baseDir =
-        process.platform === 'win32'
-            ? path.join(os.homedir(), 'AppData', 'Local', 'Google', 'Chrome', 'User Data')
-            : process.platform === 'darwin'
+    const userDataDir = process.platform === 'win32'
+        ? path.join(os.homedir(), 'AppData', 'Local', 'Google', 'Chrome', 'User Data')
+        : process.platform === 'darwin'
             ? path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome')
             : path.join(os.homedir(), '.config', 'google-chrome');
-    return path.join(baseDir, profileName);
+    
+    return userDataDir;
 }
+
+/**
+ * Returns the Chrome executable path based on the operating system.
+ * @returns {string} The path to Chrome executable
+ */
+function getChromeExecutablePath() {
+    switch (process.platform) {
+        case 'win32':
+            // Windows: Check both Program Files paths
+            const programFiles = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+            const programFilesX86 = "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe";
+            if (require('fs').existsSync(programFiles)) return programFiles;
+            if (require('fs').existsSync(programFilesX86)) return programFilesX86;
+            break;
+        case 'darwin':
+            // macOS
+            return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+        case 'linux':
+            // Linux
+            return '/usr/bin/google-chrome';
+        default:
+            throw new Error(`Unsupported platform: ${process.platform}`);
+    }
+    throw new Error('Chrome executable not found');
+}
+
+let context = null;
+let page = null;
+
+const launchBrowser = async (config) => {
+    try {
+        // Get the profile name from config
+        const browser_profile_name = config.browser_profile_name || 'Default';
+        console.log(`Using Chrome profile: ${browser_profile_name}`);
+
+        // Kill any existing Chrome processes using the specific profile
+        if (process.platform === 'win32') {
+            try {
+                await require('child_process').execSync('taskkill /F /IM chrome.exe');
+            } catch (e) {
+                // It's okay if there are no Chrome processes to kill
+                console.log("No existing Chrome processes found");
+            }
+        }
+
+        // Wait a moment for processes to clean up
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
+        const userDataDir = getChromeProfilePath(browser_profile_name);
+        const executablePath = getChromeExecutablePath();
+        console.log(`Using Chrome executable at: ${executablePath}`);
+        console.log("Launching new browser context...");
+        
+        context = await chromium.launchPersistentContext(userDataDir, {
+            headless: false,
+            channel: 'chrome',
+            executablePath,
+            args: [
+                `--profile-directory=${browser_profile_name}`,
+                    '--disable-blink-features=AutomationControlled',
+                    '--start-maximized'
+            ]
+        });
+
+        // Create a new page in this context
+        page = await context.newPage();
+        console.log("Browser launched successfully!");
+        
+        // Add event listener for when the browser disconnects unexpectedly
+        context.on('close', () => {
+            console.log('Browser context was closed');
+            context = null;
+            page = null;
+        });
+
+        console.log("Navigating to Facebook...");
+        await page.goto('https://www.facebook.com');
+        await randomDelay(3000, 5000);
+
+        // Check if login is needed
+        const isLoggedIn = await page.waitForSelector('div[role="button"] span:has-text("What\'s on your mind")', { 
+            timeout: 5000 
+        }).then(() => true).catch(() => false);
+
+        if (!isLoggedIn) {
+            console.log("Login required. Attempting to login...");
+            await page.waitForSelector('input[data-testid="royal-email"]');
+            await randomDelay();
+            await page.type('input[data-testid="royal-email"]', credentials.username, { delay: 300 });
+            await randomDelay();
+            await page.type('input[data-testid="royal-pass"]', credentials.password, { delay: 300 });
+            await randomDelay();
+            await page.click('button[data-testid="royal-login-button"]');
+            await page.waitForLoadState('networkidle', { timeout: 60000 });
+            await page.waitForSelector('div[role="button"] span:has-text("What\'s on your mind")', { 
+                timeout: 60000 
+            });
+            console.log("Login successful!");
+        } else {
+            console.log("Already logged in!");
+        }
+
+    } catch (error) {
+        console.error("Error launching browser:", error);
+        if (context) {
+            try {
+                await context.close();
+            } catch (closeError) {
+                console.error("Error closing context:", closeError);
+            }
+        }
+        throw error;
+    }
+};
+
+// Add cleanup function for graceful shutdown
+async function cleanup() {
+    if (context) {
+        try {
+            await context.close();
+        } catch (error) {
+            console.error("Error during cleanup:", error);
+        }
+    }
+}
+
+// Handle process termination
+process.on('SIGINT', cleanup);
+process.on('SIGTERM', cleanup);
 
 /**
  * Returns a promise that resolves after a random delay.
@@ -121,7 +251,6 @@ async function createPost(page, post) {
     await randomDelay(8000, 12000);
     } catch (error) {
         console.error("Error in createPost:", error);
-        await page.screenshot({ path: 'error-screenshot.png' });
         throw error;
     }
 }
@@ -210,62 +339,29 @@ async function createGroupPost(page, post, groupUrl) {
  * Main function to run the Facebook bot
  */
 async function runBot() {
-    const { config, credentials, browser_profile_name } = JSON.parse(process.env.BOT_CONFIG || '{}');
+    // Parse the bot configuration from environment variable
+    const botConfig = JSON.parse(process.env.BOT_CONFIG || '{}');
+    const { config, credentials, browser_profile_name } = botConfig;
+
     if (!credentials || !credentials.username || !credentials.password) {
         console.error("Missing Facebook credentials in configuration.");
         return;
     }
 
-    const chromeProfilePath = getChromeProfilePath(browser_profile_name);
     const posts = Array.isArray(config) ? config : [config];
     
-    if (!posts.length) {
-        console.error("No posts configured.");
+    if (!posts.length || (!posts[0].postContent && !posts[0].filePath)) {
+        console.error("No post content or image provided in configuration.");
         return;
     }
 
     posts.sort((a, b) => new Date(a.postTime) - new Date(b.postTime));
     
-    let context, page, lastScheduledTime;
     let groupsData = {};
     
     try {
-        // Launch browser
-        console.log("Launching browser...");
-        context = await chromium.launchPersistentContext(chromeProfilePath, { 
-            headless: false, 
-            channel: 'chrome' 
-        });
-        page = await context.newPage();
-        console.log("Browser launched successfully!");
-        
-        // Navigate to Facebook and check login status
-        console.log("Navigating to Facebook...");
-        await page.goto('https://www.facebook.com');
-        await randomDelay(3000, 5000);
-
-        // Check if login is needed
-        const isLoggedIn = await page.waitForSelector('div[role="button"] span:has-text("What\'s on your mind")', { 
-            timeout: 5000 
-        }).then(() => true).catch(() => false);
-
-        if (!isLoggedIn) {
-            console.log("Login required. Attempting to login...");
-            await page.waitForSelector('input[data-testid="royal-email"]');
-            await randomDelay();
-            await page.type('input[data-testid="royal-email"]', credentials.username, { delay: 300 });
-            await randomDelay();
-            await page.type('input[data-testid="royal-pass"]', credentials.password, { delay: 300 });
-            await randomDelay();
-            await page.click('button[data-testid="royal-login-button"]');
-            await page.waitForLoadState('networkidle', { timeout: 60000 });
-            await page.waitForSelector('div[role="button"] span:has-text("What\'s on your mind")', { 
-                timeout: 60000 
-            });
-            console.log("Login successful!");
-        } else {
-            console.log("Already logged in!");
-        }
+        // Pass the entire parsed config to launchBrowser
+        await launchBrowser({ browser_profile_name });
 
         // Fetch groups data
         console.log("Fetching groups data...");
@@ -321,18 +417,12 @@ async function runBot() {
                 console.log("Waiting before next post...");
                 await randomDelay(15000, 20000);
             }
-            
-            lastScheduledTime = scheduledTime;
         }
     } catch (error) {
         console.error("Error in bot execution:", error);
         throw error;
     } finally {
-        if (context) {
-            console.log("Waiting 2 minutes before closing browser...");
-            await new Promise(res => setTimeout(res, 120000));
-            await context.close();
-        }
+        await cleanup();
     }
 }
 

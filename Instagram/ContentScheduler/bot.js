@@ -1,25 +1,47 @@
 const path = require('path');
 const { chromium } = require('playwright');
 const os = require('os');
+const fs = require('fs');
 
 /**
- * Returns the Chrome user profile directory dynamically.
- *
- * The function builds a dynamic path using the operating system's
- * default locations for Chrome's user data. You only need to set the
- * profile name (for example, "Profile 17") and the rest is handled automatically.
- *
- * @param {string} profileName - The name of the Chrome profile.
- * @returns {string} The full path to the Chrome profile.
+ * Returns the Chrome user profile base directory.
+ * Note: Do NOT append the profile name here.
+ * The profile (for example: "Profile 17") will be selected via the launch args.
  */
-function getChromeProfilePath(profileName) {
-    const baseDir =
-        process.platform === 'win32'
-            ? path.join(os.homedir(), 'AppData', 'Local', 'Google', 'Chrome', 'User Data')
-            : process.platform === 'darwin'
-            ? path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome')
-            : path.join(os.homedir(), '.config', 'google-chrome');
-    return path.join(baseDir, profileName);
+function getChromeProfilePath() {
+    // Return only the base directory
+    return process.platform === 'win32'
+        ? path.join(os.homedir(), 'AppData', 'Local', 'Google', 'Chrome', 'User Data')
+        : process.platform === 'darwin'
+        ? path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome')
+        : path.join(os.homedir(), '.config', 'google-chrome');
+}
+
+/**
+ * Returns the Chrome executable path based on the operating system.
+ * Incorporates logic from the Facebook bot.
+ *
+ * @returns {string} The path to Chrome executable.
+ */
+function getChromeExecutablePath() {
+    switch (process.platform) {
+        case 'win32':
+            // Windows: Check both Program Files paths
+            const programFiles = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+            const programFilesX86 = "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe";
+            if (fs.existsSync(programFiles)) return programFiles;
+            if (fs.existsSync(programFilesX86)) return programFilesX86;
+            break;
+        case 'darwin':
+            // macOS
+            return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+        case 'linux':
+            // Linux
+            return '/usr/bin/google-chrome';
+        default:
+            throw new Error(`Unsupported platform: ${process.platform}`);
+    }
+    throw new Error('Chrome executable not found');
 }
 
 function randomDelay(min = 3000, max = 8000) {
@@ -39,7 +61,7 @@ async function uploadAndSharePost(page, post) {
     
     console.log("Initiating new post...");
     await page.click('span:has-text("Create")');
-    await randomDelay(3000, 5000);
+    await randomDelay(3000, 6000);
 
     try {
         await Promise.race([
@@ -176,22 +198,54 @@ async function uploadAndSharePost(page, post) {
  * For longer gaps, it will close the current browser window and launch a new one.
  */
 async function runBot() {
-    const { config, credentials, browser_profile_name } = JSON.parse(process.env.BOT_CONFIG || '{}');
+    // Parse the bot configuration from environment variable
+    const botConfig = JSON.parse(process.env.BOT_CONFIG || '{}');
+    const { config, credentials, browser_profile_name } = botConfig;
+
     if (!credentials || !credentials.username || !credentials.password) {
         console.error("Missing Instagram credentials in configuration.");
         return;
     }
-    const chromeProfilePath = getChromeProfilePath(browser_profile_name);
-    const posts = Array.isArray(config) ? config.sort((a, b) => new Date(a.postTime) - new Date(b.postTime)) : [config];
-    if (!posts[0].filePath) {
+
+    // Normalize config to always be an array
+    const posts = Array.isArray(config) ? config : [config];
+    
+    if (!posts[0] || !posts[0].filePath) {
         console.error("No image path provided in configuration.");
         return;
     }
-    
+
+    posts.sort((a, b) => new Date(a.postTime) - new Date(b.postTime));
+    const chromeProfilePath = getChromeProfilePath();
     let context, page, lastScheduledTime;
+    /**
+     * Launches the browser with persistent context using the base directory.
+     * The specific profile is selected via the launch arguments.
+     */
     const launchBrowser = async () => {
         if (context) await context.close();
-        context = await chromium.launchPersistentContext(chromeProfilePath, { headless: false, channel: 'chrome' });
+
+        if (process.platform === 'win32') {
+            try {
+                await require('child_process').execSync('taskkill /F /IM chrome.exe');
+                console.log("Killed existing Chrome processes");
+            } catch (e) {
+                console.log("No existing Chrome processes found");
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        const executablePath = getChromeExecutablePath();
+        context = await chromium.launchPersistentContext(chromeProfilePath, {
+            headless: false,
+            channel: 'chrome',
+            executablePath,
+            args: [
+                `--profile-directory=${browser_profile_name}`,
+                '--disable-blink-features=AutomationControlled',
+                '--start-maximized'
+            ]
+        });
         page = await context.newPage();
         console.log("Browser launched successfully!");
         console.log("Navigating to Instagram...");
@@ -280,15 +334,15 @@ async function runBot() {
             console.log(`Scheduled time ${scheduledTime} already passed. Posting immediately.`);
         }
         
-        randomDelay(1500, 3000)
+        await randomDelay(1500, 3000);
         await uploadAndSharePost(page, post);
         
-        if (idx < posts.length - 1) {
+        if (posts.length > 1 && idx < posts.length - 1) {
             console.log("Waiting 8 - 13 seconds before next post...");
-            await randomDelay(8000, 13000)
+            await randomDelay(8000, 13000);
             console.log("Reloading page for the next post...");
             await page.reload();
-            page.waitForTimeout(10000)
+            await page.waitForTimeout(10000);
             console.log("Page fully reloaded. Proceeding with next post...");
         }
         lastScheduledTime = scheduledTime;

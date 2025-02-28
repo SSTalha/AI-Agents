@@ -4,3 +4,23 @@ C:\Users\Haroon\OneDrive\Desktop\sample\mile.png
 chrome://version/
 
 C:\Users\Talha\Desktop\sample\cat.jpeg
+
+
+
+
+
+
+ try {
+        // Get the profile name from config
+        const browser_profile_name = config.browser_profile_name || 'Default';
+        console.log(`Using Chrome profile: ${browser_profile_name}`);
+
+        // Kill any existing Chrome processes using the specific profile
+        if (process.platform === 'win32') {
+            try {
+                await require('child_process').execSync('taskkill /F /IM chrome.exe');
+            } catch (e) {
+                // It's okay if there are no Chrome processes to kill
+                console.log("No existing Chrome processes found");
+            }
+        }

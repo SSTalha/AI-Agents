@@ -8,13 +8,38 @@ const os = require('os');
  * @returns {string} The full path to the Chrome profile.
  */
 function getChromeProfilePath(profileName) {
-    const baseDir =
-        process.platform === 'win32'
-            ? path.join(os.homedir(), 'AppData', 'Local', 'Google', 'Chrome', 'User Data')
-            : process.platform === 'darwin'
+    const userDataDir = process.platform === 'win32'
+        ? path.join(os.homedir(), 'AppData', 'Local', 'Google', 'Chrome', 'User Data')
+        : process.platform === 'darwin'
             ? path.join(os.homedir(), 'Library', 'Application Support', 'Google', 'Chrome')
             : path.join(os.homedir(), '.config', 'google-chrome');
-    return path.join(baseDir, profileName);
+    
+    return userDataDir;
+}
+
+/**
+ * Returns the Chrome executable path based on the operating system.
+ * @returns {string} The path to Chrome executable
+ */
+function getChromeExecutablePath() {
+    switch (process.platform) {
+        case 'win32':
+            // Windows: Check both Program Files paths
+            const programFiles = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+            const programFilesX86 = "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe";
+            if (require('fs').existsSync(programFiles)) return programFiles;
+            if (require('fs').existsSync(programFilesX86)) return programFilesX86;
+            break;
+        case 'darwin':
+            // macOS
+            return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+        case 'linux':
+            // Linux
+            return '/usr/bin/google-chrome';
+        default:
+            throw new Error(`Unsupported platform: ${process.platform}`);
+    }
+    throw new Error('Chrome executable not found');
 }
 
 /**
@@ -30,115 +55,143 @@ function randomDelay(min = 3000, max = 8000) {
  * Main function to run the TikTok bot.
  */
 async function runBot() {
-    const { credentials, config, browser_profile_name } = JSON.parse(process.env.BOT_CONFIG || '{}');
+    // Parse the bot configuration from environment variable
+    const botConfig = JSON.parse(process.env.BOT_CONFIG || '{}');
+    const { config, credentials, browser_profile_name } = botConfig;
+
     if (!credentials || !credentials.username || !credentials.password) {
         console.error("Missing TikTok credentials in configuration.");
         return;
     }
 
-    // Normalize config to an array even for a single post.
-    const posts = Array.isArray(config) ? config.sort((a, b) => new Date(a.postTime) - new Date(b.postTime)) : [config];
-    if (!posts[0].filePath) {
+    // Normalize config to always be an array
+    const posts = Array.isArray(config) ? config : [config];
+    
+    if (!posts[0] || !posts[0].filePath) {
         console.error("No video path provided in configuration.");
         return;
     }
 
-    const chromeProfilePath = getChromeProfilePath(browser_profile_name);
+    // Sort posts by scheduled time (this was already in the original code)
+    posts.sort((a, b) => new Date(a.postTime) - new Date(b.postTime));
+    
     let context, page, lastScheduledTime;
 
     const launchBrowser = async () => {
-        if (context) await context.close();
-        context = await chromium.launchPersistentContext(chromeProfilePath, { 
-            headless: false, 
-            channel: 'chrome' 
-        });
-        page = await context.newPage();
-        console.log("Browser launched successfully!");
-        console.log("Navigating to TikTok...");
-        await page.goto('https://www.tiktok.com');
-        await page.waitForTimeout(6000);
-
         try {
-            // First check if login modal appears automatically
-            console.log("Checking login status...");
-            const loginModalVisible = await page.waitForSelector('#loginContainer', {
-                timeout: 10000,
-                state: 'visible'
-            }).then(() => true).catch(() => false);
+            if (context) {
+                console.log("Closing existing context...");
+                await context.close();
+            }
 
-            if (loginModalVisible) {
-                console.log("Login modal detected, need to login first...");
-                console.log("Looking for 'Use phone / email / username' option...");
-                const phoneEmailButton = await page.waitForSelector('div:text("Use phone / email / username")', {
-                    timeout: 10000
-                });
-                
-                if (!phoneEmailButton) {
-                    throw new Error("Could not find 'Use phone / email / username' option");
-                }
-                await phoneEmailButton.click();
-                await randomDelay(2000, 3200);
+            const userDataDir = getChromeProfilePath(browser_profile_name);
+            const executablePath = getChromeExecutablePath();
+            console.log(`Using Chrome executable at: ${executablePath}`);
+            console.log("Launching new browser context...");
+            
+            context = await chromium.launchPersistentContext(userDataDir, {
+                headless: false,
+                channel: 'chrome',
+                executablePath,  // Dynamic executable path
+                args: [
+                    `--profile-directory=${browser_profile_name}`,
+                    '--disable-blink-features=AutomationControlled',
+                    '--start-maximized'
+                ]
+            });
 
-                console.log("Looking for email login option...");
-                await page.waitForSelector('a[href="/login/phone-or-email/email"]', { timeout: 10000 });
-                await page.click('a[href="/login/phone-or-email/email"]');
-                await randomDelay(2000, 3200);
+            page = await context.newPage();
+            console.log("Browser launched successfully!");
+            console.log("Navigating to TikTok...");
+            await page.goto('https://www.tiktok.com/tiktokstudio/upload?from=webapp');
+            await page.waitForTimeout(6000);
 
-                console.log("Looking for username/email field...");
-                await page.waitForSelector('input[name="username"]', { timeout: 10000 });
-                await page.type('input[name="username"]', credentials.username, { delay: 150 });
-                console.log("Username/email entered successfully");
-                await randomDelay(2000, 3000);
-
-                console.log("Looking for password field...");
-                await page.waitForSelector('input[type="password"]', { timeout: 10000 });
-                await page.type('input[type="password"]', credentials.password, { delay: 150 });
-                console.log("Password entered successfully");
-                await randomDelay(2000, 3000);
-
-                console.log("Clicking login button...");
-                await page.waitForSelector('button[data-e2e="login-button"]', { timeout: 10000 });
-                await page.click('button[data-e2e="login-button"]');
-                console.log("Login attempt completed");
-                await randomDelay(5000, 7000);
-
-                // Verify login was successful by checking for upload button or other authenticated elements
-                const isLoggedIn = await page.waitForSelector('div[data-e2e="upload-icon"]', {
-                    timeout: 10000
-                }).then(() => true).catch(() => false);
-
-                if (!isLoggedIn) {
-                    throw new Error("Login seems to have failed - couldn't find upload button");
-                }
-                
-                console.log("Successfully logged in!");
-            } else {
-                console.log("No login modal detected - we are already logged in!");
-                console.log("Navigating to TikTok Studio upload page...");
-                
-                // Navigate to the upload studio page
-                await page.goto('https://www.tiktok.com/tiktokstudio/upload?from=webapp');
-                await randomDelay(5000, 7000);
-
-                // Verify we're on the upload page
-                const uploadContainer = await page.waitForSelector('[data-e2e="select_video_container"]', {
+            try {
+                // First check if login modal appears automatically
+                console.log("Checking login status...");
+                const loginModalVisible = await page.waitForSelector('#loginContainer', {
                     timeout: 10000,
                     state: 'visible'
-                });
+                }).then(() => true).catch(() => false);
 
-                if (!uploadContainer) {
-                    throw new Error("Could not access upload page - please check login status");
+                if (loginModalVisible) {
+                    console.log("Login modal detected, need to login first...");
+                    console.log("Looking for 'Use phone / email / username' option...");
+                    const phoneEmailButton = await page.waitForSelector('div:text("Use phone / email / username")', {
+                        timeout: 10000
+                    });
+                    
+                    if (!phoneEmailButton) {
+                        throw new Error("Could not find 'Use phone / email / username' option");
+                    }
+                    await phoneEmailButton.click();
+                    await randomDelay(2000, 3200);
+
+                    console.log("Looking for email login option...");
+                    await page.waitForSelector('a[href="/login/phone-or-email/email"]', { timeout: 10000 });
+                    await page.click('a[href="/login/phone-or-email/email"]');
+                    await randomDelay(2000, 3200);
+
+                    console.log("Looking for username/email field...");
+                    await page.waitForSelector('input[name="username"]', { timeout: 10000 });
+                    await page.type('input[name="username"]', credentials.username, { delay: 150 });
+                    console.log("Username/email entered successfully");
+                    await randomDelay(2000, 3000);
+
+                    console.log("Looking for password field...");
+                    await page.waitForSelector('input[type="password"]', { timeout: 10000 });
+                    await page.type('input[type="password"]', credentials.password, { delay: 150 });
+                    console.log("Password entered successfully");
+                    await randomDelay(2000, 3000);
+
+                    console.log("Clicking login button...");
+                    await page.waitForSelector('button[data-e2e="login-button"]', { timeout: 10000 });
+                    await page.click('button[data-e2e="login-button"]');
+                    console.log("Login attempt completed");
+                    await randomDelay(5000, 7000);
+
+                    // Verify login was successful by checking for upload button or other authenticated elements
+                    const isLoggedIn = await page.waitForSelector('div[data-e2e="upload-icon"]', {
+                        timeout: 10000
+                    }).then(() => true).catch(() => false);
+
+                    if (!isLoggedIn) {
+                        throw new Error("Login seems to have failed - couldn't find upload button");
+                    }
+                    
+                    console.log("Successfully logged in!");
+                } else {
+                    console.log("No login modal detected - we are already logged in!");
+                    console.log("Navigating to TikTok Studio upload page...");
+                    
+                    // Navigate to the upload studio page
+                    await page.goto('https://www.tiktok.com/tiktokstudio/upload?from=webapp');
+                    await randomDelay(5000, 7000);
+
+                    // Verify we're on the upload page
+                    const uploadContainer = await page.waitForSelector('[data-e2e="select_video_container"]', {
+                        timeout: 10000,
+                        state: 'visible'
+                    });
+
+                    if (!uploadContainer) {
+                        throw new Error("Could not access upload page - please check login status");
+                    }
+
+                    console.log("Successfully accessed TikTok Studio upload page!");
                 }
 
-                console.log("Successfully accessed TikTok Studio upload page!");
+            } catch (error) {
+                console.error("Error during process:", error);
+                if (page) {
+                    console.log("error came in tiktok");
+                }
+                throw error;
             }
 
         } catch (error) {
-            console.error("Error during process:", error);
-            if (page) {
-                await page.screenshot({ path: 'tiktok-error.png', fullPage: true });
-                console.log("Screenshot saved as tiktok-error.png");
-            }
+            console.error("Error launching browser:", error);
+            if (context) await context.close();
             throw error;
         }
 
