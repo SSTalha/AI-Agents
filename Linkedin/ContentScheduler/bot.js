@@ -149,18 +149,26 @@ async function createPost(page, post) {
  * Main function to run the LinkedIn bot
  */
 async function runBot() {
-    const { credentials, config, browser_profile_name } = JSON.parse(process.env.BOT_CONFIG || '{}');
-    
+    // Parse the bot configuration from environment variable
+    const botConfig = JSON.parse(process.env.BOT_CONFIG || '{}');
+    const { config, credentials, browser_profile_name } = botConfig;
+
     if (!credentials || !credentials.username || !credentials.password) {
         console.error("Missing LinkedIn credentials in configuration.");
         return;
     }
+
+    // Normalize config to always be an array
+    const posts = Array.isArray(config) ? config : [config];
     
-    // Normalize config to an array even for a single post
-    const posts = Array.isArray(config) ? config.sort((a, b) => new Date(a.postTime) - new Date(b.postTime)) : [config];
-    
-    // Use base directory only—do not append the profile name
-    const chromeProfilePath = getChromeProfilePath();
+    if (!posts[0]) {
+        console.error("No post configuration provided.");
+        return;
+    }
+
+    // Use the precomputed scheduledTime if available
+    posts.sort((a, b) => new Date(a.scheduledTime || a.postTime) - new Date(b.scheduledTime || b.postTime));
+    chromeProfilePath = getChromeProfilePath();
     let context, page, lastScheduledTime;
 
     const launchBrowser = async () => {

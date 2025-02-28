@@ -198,19 +198,25 @@ async function uploadAndSharePost(page, post) {
  * For longer gaps, it will close the current browser window and launch a new one.
  */
 async function runBot() {
-    const { config, credentials, browser_profile_name } = JSON.parse(process.env.BOT_CONFIG || '{}');
+    // Parse the bot configuration from environment variable
+    const botConfig = JSON.parse(process.env.BOT_CONFIG || '{}');
+    const { config, credentials, browser_profile_name } = botConfig;
+
     if (!credentials || !credentials.username || !credentials.password) {
         console.error("Missing Instagram credentials in configuration.");
         return;
     }
-    // Use the base directory only — do not append the profile name.
-    const chromeProfilePath = getChromeProfilePath(); 
-    const posts = Array.isArray(config) ? config.sort((a, b) => new Date(a.postTime) - new Date(b.postTime)) : [config];
-    if (!posts[0].filePath) {
+
+    // Normalize config to always be an array
+    const posts = Array.isArray(config) ? config : [config];
+    
+    if (!posts[0] || !posts[0].filePath) {
         console.error("No image path provided in configuration.");
         return;
     }
-    
+
+    posts.sort((a, b) => new Date(a.postTime) - new Date(b.postTime));
+    const chromeProfilePath = getChromeProfilePath();
     let context, page, lastScheduledTime;
     /**
      * Launches the browser with persistent context using the base directory.

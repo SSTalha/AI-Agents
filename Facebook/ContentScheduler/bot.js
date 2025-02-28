@@ -339,7 +339,10 @@ async function createGroupPost(page, post, groupUrl) {
  * Main function to run the Facebook bot
  */
 async function runBot() {
-    const { credentials, config, browser_profile_name } = JSON.parse(process.env.BOT_CONFIG || '{}');
+    // Parse the bot configuration from environment variable
+    const botConfig = JSON.parse(process.env.BOT_CONFIG || '{}');
+    const { config, credentials, browser_profile_name } = botConfig;
+
     if (!credentials || !credentials.username || !credentials.password) {
         console.error("Missing Facebook credentials in configuration.");
         return;
@@ -347,8 +350,8 @@ async function runBot() {
 
     const posts = Array.isArray(config) ? config : [config];
     
-    if (!posts.length) {
-        console.error("No posts configured.");
+    if (!posts.length || (!posts[0].postContent && !posts[0].filePath)) {
+        console.error("No post content or image provided in configuration.");
         return;
     }
 

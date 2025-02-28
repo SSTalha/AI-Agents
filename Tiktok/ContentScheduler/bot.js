@@ -55,19 +55,26 @@ function randomDelay(min = 3000, max = 8000) {
  * Main function to run the TikTok bot.
  */
 async function runBot() {
-    const { credentials, config, browser_profile_name } = JSON.parse(process.env.BOT_CONFIG || '{}');
+    // Parse the bot configuration from environment variable
+    const botConfig = JSON.parse(process.env.BOT_CONFIG || '{}');
+    const { config, credentials, browser_profile_name } = botConfig;
+
     if (!credentials || !credentials.username || !credentials.password) {
         console.error("Missing TikTok credentials in configuration.");
         return;
     }
 
-    // Normalize config to an array even for a single post.
-    const posts = Array.isArray(config) ? config.sort((a, b) => new Date(a.postTime) - new Date(b.postTime)) : [config];
-    if (!posts[0].filePath) {
+    // Normalize config to always be an array
+    const posts = Array.isArray(config) ? config : [config];
+    
+    if (!posts[0] || !posts[0].filePath) {
         console.error("No video path provided in configuration.");
         return;
     }
 
+    // Sort posts by scheduled time (this was already in the original code)
+    posts.sort((a, b) => new Date(a.postTime) - new Date(b.postTime));
+    
     let context, page, lastScheduledTime;
 
     const launchBrowser = async () => {
