@@ -35,7 +35,7 @@ function buildUnifiedTaskQueue(botConfig) {
     const platformConfig = botConfig[platform];
     if (platformConfig && platformConfig.ContentScheduler && platformConfig.ContentScheduler.enabled) {
       const schedulerConfig = platformConfig.ContentScheduler;
-      const posts = schedulerConfig.config; // can be single object or array
+      const posts = schedulerConfig.config;
       if (Array.isArray(posts)) {
         posts.forEach((post, index) => {
           tasks.push({

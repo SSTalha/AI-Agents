@@ -158,7 +158,7 @@ function randomDelay(min = 5000, max = 9000) {
  * Creates a Facebook post with the given content and image
  */
 async function createPost(page, post) {
-    const { postContent, filePath } = post;
+    const { caption, filePath } = post;
     console.log("Creating new post...");
     
     try {
@@ -232,7 +232,7 @@ async function createPost(page, post) {
         // }, textboxSelector);
 
         // Type content with human-like delays
-        for (const char of postContent.split('')) {
+        for (const char of caption.split('')) {
             await page.type(textboxSelector, char);
             await new Promise(resolve => setTimeout(resolve, Math.random() * 300));
         }
@@ -350,7 +350,7 @@ async function runBot() {
 
     const posts = Array.isArray(config) ? config : [config];
     
-    if (!posts.length || (!posts[0].postContent && !posts[0].filePath)) {
+    if (!posts.length || (!posts[0].caption && !posts[0].filePath)) {
         console.error("No post content or image provided in configuration.");
         return;
     }

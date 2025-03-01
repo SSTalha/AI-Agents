@@ -56,7 +56,7 @@ function getChromeExecutablePath() {
  * Creates a LinkedIn post with the given content and image
  */
 async function createPost(page, post) {
-    const { postContent, filePath } = post;
+    const { caption, filePath } = post;
     console.log("Creating new post...");
     
     // Wait for and click the post creation button using text content
@@ -74,7 +74,7 @@ async function createPost(page, post) {
     
     // Type content with human-like delays
     console.log("Entering post content...");
-    await page.type('div[role="textbox"]', postContent, { delay: 100 });
+    await page.type('div[role="textbox"]', caption, { delay: 100 });
     await randomDelay();
     
     // If we have a file to upload (image or video)
@@ -161,8 +161,8 @@ async function runBot() {
     // Normalize config to always be an array
     const posts = Array.isArray(config) ? config : [config];
     
-    if (!posts[0]) {
-        console.error("No post configuration provided.");
+    if (!posts[0] || !posts[0].filePath) {
+        console.error("No image path provided in configuration.");
         return;
     }
 
@@ -277,3 +277,10 @@ async function runBot() {
 }
 
 module.exports = { runBot };
+
+if (require.main === module) {
+    runBot().catch(error => {
+        console.error('Error running LinkedIn bot:', error);
+        process.exit(1);
+    });
+}
