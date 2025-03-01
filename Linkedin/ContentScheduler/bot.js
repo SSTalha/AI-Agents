@@ -56,7 +56,7 @@ function getChromeExecutablePath() {
  * Creates a LinkedIn post with the given content and image
  */
 async function createPost(page, post) {
-    const { postContent, filePath } = post;
+    const { caption, filePath } = post;
     console.log("Creating new post...");
     
     // Wait for and click the post creation button using text content
@@ -74,7 +74,7 @@ async function createPost(page, post) {
     
     // Type content with human-like delays
     console.log("Entering post content...");
-    await page.type('div[role="textbox"]', postContent, { delay: 100 });
+    await page.type('div[role="textbox"]', caption, { delay: 100 });
     await randomDelay();
     
     // If we have a file to upload (image or video)

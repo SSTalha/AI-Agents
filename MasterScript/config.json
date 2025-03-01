@@ -10,12 +10,12 @@
         "config": [
             {
                 "postTime": "2025-02-16 05:00",
-                "postContent": "haha",
+                "caption": "haha",
                 "filePath":  "C:\\Users\\Talha\\Desktop\\sample\\video1.mp4"
             },
             {
               "postTime": "2025-02-16 05:10",
-              "postContent": "haha",
+              "caption": "haha",
               "filePath":  "C:\\Users\\Talha\\Desktop\\sample\\video1.mp4"
             }
         ]
@@ -28,7 +28,7 @@
           "password": "limo@insta.acc"
     },
     "ContentScheduler": {
-          "enabled": true,
+          "enabled": false,
           "config": [
               {
                 "filePath": "C:\\Users\\Talha\\Desktop\\sample\\luffy.jpeg",
@@ -83,7 +83,7 @@
           {
               "filePath": "C:\\Users\\Talha\\Desktop\\sample\\video1.mp4",
               "postTime": "2025-02-15 04:18",
-              "postContent": "Rick's humour is something."
+              "caption": "Rick's humour is something."
           }
         ]
     }
@@ -95,7 +95,7 @@
       "password": "limo.tik@tok.788"
     },
     "ContentScheduler": {
-      "enabled": true,
+      "enabled": false,
       "config": [
         {
           "filePath": "C:\\Users\\Talha\\Desktop\\sample\\video1.mp4",
