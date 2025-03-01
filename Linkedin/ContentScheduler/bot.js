@@ -161,8 +161,8 @@ async function runBot() {
     // Normalize config to always be an array
     const posts = Array.isArray(config) ? config : [config];
     
-    if (!posts[0]) {
-        console.error("No post configuration provided.");
+    if (!posts[0] || !posts[0].filePath) {
+        console.error("No image path provided in configuration.");
         return;
     }
 
@@ -277,3 +277,10 @@ async function runBot() {
 }
 
 module.exports = { runBot };
+
+if (require.main === module) {
+    runBot().catch(error => {
+        console.error('Error running LinkedIn bot:', error);
+        process.exit(1);
+    });
+}

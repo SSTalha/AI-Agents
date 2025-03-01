@@ -6,7 +6,7 @@
         "password": "ali.omni@cheema"
     },
     "ContentScheduler": {
-        "enabled": true,
+        "enabled": false,
         "config": [
             {
                 "postTime": "2025-02-16 05:00",
@@ -46,7 +46,7 @@
       "email": "alicheema.omni@gmail.com"
     },
     "ContentScheduler": {
-      "enabled": false,
+      "enabled": true,
       "config": [
           {
             "filePath": "C:\\Users\\Talha\\Desktop\\sample\\cat.jpeg",
