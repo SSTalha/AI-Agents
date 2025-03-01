@@ -49,6 +49,7 @@ function getChromeExecutablePath() {
  */
 function randomDelay(min = 3000, max = 8000) {
     const delay = Math.floor(Math.random() * (max - min + 1)) + min;
+    console.log(`Waiting for ${delay/1000} seconds...`);
     return new Promise(resolve => setTimeout(resolve, delay));
 }
 
@@ -108,7 +109,17 @@ async function runBot() {
         await page.goto('https://x.com');
         await page.waitForTimeout(6000);
         
-        // Perform login flow.
+        // Check if we're already logged in by looking for compose button
+        try {
+            console.log("Checking if already logged in...");
+            await page.waitForSelector('a[href="/compose/post"][aria-label="Post"]', { timeout: 5000 });
+            console.log("User already logged in, proceeding to post");
+            return;
+        } catch (error) {
+            console.log("Not logged in, proceeding with login flow");
+        }
+        
+        // Perform login flow only if not already logged in
         try {
             console.log("Looking for sign in button...");
             await page.waitForSelector('a[href="/login"]', { timeout: 7000 });
@@ -211,7 +222,15 @@ async function runBot() {
         } catch (error) {
             console.log("No popup detected, refreshing the page...");
             await page.reload();
-            await page.waitForLoadState('networkidle');
+            try {
+                console.log("Waiting for page to load...");
+                await page.waitForLoadState('domcontentloaded', { timeout: 60000 });
+                console.log("DOM content loaded, waiting for network to stabilize...");
+                await page.waitForLoadState('networkidle', { timeout: 60000 });
+            } catch (loadError) {
+                console.log("Page load timed out, but continuing anyway...");
+                await page.waitForTimeout(15000);
+            }
         }
 
         if (idx < posts.length - 1) {
@@ -242,40 +261,40 @@ async function composeAndPostTweet(page, post) {
     const { tweetContent, filePath } = post;
     
     console.log("Initiating new tweet...");
+    await randomDelay(4000, 7000);
     await page.click('a[href="/compose/post"][aria-label="Post"]');
-    await randomDelay(3000, 5000);
+    await randomDelay(5000, 8000);
 
     if (tweetContent && tweetContent.trim()) {
         console.log("Entering tweet content...");
-        const tweetInputSelector = 'div[aria-label="Post text"][role="textbox"]';
-        await page.waitForSelector(tweetInputSelector, { timeout: 5000 });
-        await page.type(tweetInputSelector, tweetContent, { delay: 100 });
+        await page.waitForSelector('div[aria-label="Post text"][role="textbox"]', { timeout: 5000 });
+        await page.type(tweetInputSelector, tweetContent, { delay: 150 });
         console.log("Tweet content entered successfully");
-        await randomDelay(1000, 3000);
+        await randomDelay(3000, 5000);
     }
 
     if (filePath && filePath.trim()) {
         console.log("Preparing to upload image...");
         const absoluteImagePath = path.resolve(filePath);
         
-        // Wait for and click the media button to ensure the file input is available
-        await page.waitForSelector('button[aria-label="Add photos or video"]', { timeout: 5000 });
+        await randomDelay(2000, 4000);
+        await page.waitForSelector('button[aria-label="Add photos or video"]', { timeout: 10000 });
         await page.click('button[aria-label="Add photos or video"]');
-        await randomDelay(1000, 2000);
+        await randomDelay(3000, 5000);
         
-        // Use setInputFiles to directly upload the image using the file input selector
-        await page.waitForSelector('input[data-testid="fileInput"]', { timeout: 5000 });
+        await page.waitForSelector('input[data-testid="fileInput"]', { timeout: 10000 });
         await page.setInputFiles('input[data-testid="fileInput"]', absoluteImagePath);
         console.log("Image uploaded successfully");
-        await randomDelay(3000, 5000);
+        
+        await randomDelay(4000, 6000);
 
-        // After uploading the file for a tweet…
         if (['.mp4', '.mov'].includes(path.extname(absoluteImagePath).toLowerCase())) {
             console.log("Video detected, waiting for processing...");
             await randomDelay(10000, 20000);
         }
     }
 
+    await randomDelay(4000, 7000);
     console.log("Looking for tweet button...");
     await page.click('button[data-testid="tweetButton"]:has-text("Post")');
     console.log("Tweet posted successfully!");
