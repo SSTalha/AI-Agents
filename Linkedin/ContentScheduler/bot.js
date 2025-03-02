@@ -270,8 +270,8 @@ async function runBot() {
 
     // Close browser context
     if (context) {
-        console.log("Waiting 2 minutes before closing browser...");
-        await new Promise(res => setTimeout(res, 10000));
+        console.log("Closing Linkedin broswer...");
+            await new Promise(res => setTimeout(res, 120000));
         await context.close();
     }
 }

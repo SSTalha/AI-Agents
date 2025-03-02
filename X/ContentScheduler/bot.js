@@ -245,8 +245,8 @@ async function runBot() {
     }
 
     if (context) {
-        console.log("closing browser...");
-        await new Promise(res => setTimeout(res, 10000));
+        console.log("Closing X broswer...");
+            await new Promise(res => setTimeout(res, 120000));
         await context.close();
     }
 }

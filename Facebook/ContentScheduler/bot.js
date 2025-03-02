@@ -135,6 +135,8 @@ const launchBrowser = async (config) => {
 async function cleanup() {
     if (context) {
         try {
+            console.log("Closing facebook broswer...");
+            await new Promise(res => setTimeout(res, 120000));
             await context.close();
         } catch (error) {
             console.error("Error during cleanup:", error);

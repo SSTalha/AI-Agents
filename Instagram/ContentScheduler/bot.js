@@ -350,7 +350,7 @@ async function runBot() {
     
     if (context) {
         console.log("Closing Instagram broswer...");
-        await new Promise(res => setTimeout(res, 10000));
+        await new Promise(res => setTimeout(res, 120000));
         await context.close();
     }
 }
