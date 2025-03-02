@@ -184,7 +184,7 @@ async function uploadAndSharePost(page, post) {
         }
     });
     console.log("Clicked share button");
-    await randomDelay(10000, 15000);
+    await randomDelay(15000, 20000);
 
     console.log("Image/Video posted to Instagram successfully!");
 }
