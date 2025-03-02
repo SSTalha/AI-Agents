@@ -349,8 +349,8 @@ async function runBot() {
     }
     
     if (context) {
-        console.log("Waiting 2 minutes before closing browser...");
-        await new Promise(res => setTimeout(res, 120000));
+        console.log("Closing Instagram broswer...");
+        await new Promise(res => setTimeout(res, 10000));
         await context.close();
     }
 }

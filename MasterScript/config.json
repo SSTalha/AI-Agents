@@ -1,22 +1,22 @@
 {
   "facebook": {
-    "browser_profile_name": "Profile 23",
+    "browser_profile_name": "Profile 5",
     "credentials": {
-        "username": "alicheema.omni@gmail.com",
-        "password": "ali.omni@cheema"
+        "username": "abm",
+        "password": "abc"
     },
     "ContentScheduler": {
         "enabled": true,
         "config": [
             {
-                "postTime": "2025-02-16 05:00",
-                "caption": "haha",
-                "filePath":  "C:\\Users\\Talha\\Desktop\\sample\\video1.mp4"
+                "postTime": "2025-03-01 18:04",
+                "caption": "hahahah",
+                "filePath":  "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\meme2.png"
             },
             {
-              "postTime": "2025-02-16 05:10",
+              "postTime": "2025-03-01 18:07",
               "caption": "haha",
-              "filePath":  "C:\\Users\\Talha\\Desktop\\sample\\video2.mp4"
+              "filePath":  "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\video.mp4"
             }
         ]
     }
@@ -24,11 +24,11 @@
   "instagram": {
     "browser_profile_name": "Profile 17",
     "credentials": {
-          "username": "J__Paul_Brandout",
-          "password": "limo@insta.acc"
+          "username": "aaa",
+          "password": "lic"
     },
     "ContentScheduler": {
-          "enabled": true,
+          "enabled": false,
           "config": [
               {
                 "filePath": "C:\\Users\\Talha\\Desktop\\sample\\luffy.jpeg",
@@ -47,11 +47,11 @@
     "browser_profile_name": "Profile 23",
     "credentials": {
       "username": "noty_mankind",
-      "password": "cheema.omni@001",
-      "email": "alicheema.omni@gmail.com"
+      "password": "chee",
+      "email": "alichee"
     },
     "ContentScheduler": {
-      "enabled": true,
+      "enabled": false,
       "config": [
           {
             "filePath": "C:\\Users\\Talha\\Desktop\\sample\\luffy.jpeg",
@@ -69,32 +69,32 @@
   "linkedin": {
     "browser_profile_name": "Profile 2",
     "credentials": {
-        "username": "syedali.ahsan7654321@gmail.com",
-        "password": "Link@1232"
+        "username": "syeda",
+        "password": "Li"
     },
     "ContentScheduler": {
         "enabled": true,
         "config": [
           {
-              "filePath": "C:\\Users\\Talha\\Desktop\\sample\\video1.mp4",
-              "postTime": "2025-02-15 04:18",
+              "filePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\mile.png",
+              "postTime": "2025-03-01 18:04",
               "caption": "Rick's humour is something."
           }
         ]
     }
   },
   "tiktok": {
-    "browser_profile_name": "Profile 17",
+    "browser_profile_name": "Profile 5",
     "credentials": {
-      "username": "limo.service788@gmail.com",
-      "password": "limo.tik@tok.788"
+      "username": "limo",
+      "password": "limo"
     },
     "ContentScheduler": {
       "enabled": true,
       "config": [
         {
-          "filePath": "C:\\Users\\Talha\\Desktop\\sample\\video1.mp4",
-          "postTime": "2025-03-01 03:45",
+          "filePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\video.mp4",
+          "postTime": "2025-03-01 18:09",
           "caption": "Rick's humour is something."
       }
       ]
