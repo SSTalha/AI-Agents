@@ -9,14 +9,9 @@
         "enabled": true,
         "config": [
             {
-                "postTime": "2025-03-01 18:04",
-                "caption": "hahahah",
+                "postTime": "2025-03-21 15:00",
+                "caption": "very funny",
                 "filePath":  "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\meme2.png"
-            },
-            {
-              "postTime": "2025-03-01 18:07",
-              "caption": "haha",
-              "filePath":  "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\video.mp4"
             }
         ]
     }
@@ -77,7 +72,7 @@
         "config": [
           {
               "filePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\mile.png",
-              "postTime": "2025-03-01 18:04",
+              "postTime": "2025-03-21 15:02",
               "caption": "Rick's humour is something."
           }
         ]
@@ -94,8 +89,8 @@
       "config": [
         {
           "filePath": "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\video.mp4",
-          "postTime": "2025-03-01 18:09",
-          "caption": "Rick's humour is something."
+          "postTime": "2025-03-21 15:00",
+          "caption": "Rick's humour is funny"
       }
       ]
     }
