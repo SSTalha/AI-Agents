@@ -70,7 +70,7 @@ const launchBrowser = async (config) => {
         console.log("Launching new browser context...");
         
         context = await chromium.launchPersistentContext(userDataDir, {
-            headless: true,
+            headless: false,
             channel: 'chrome',
             executablePath,
             args: [
@@ -135,8 +135,8 @@ const launchBrowser = async (config) => {
 async function cleanup() {
     if (context) {
         try {
-            console.log("Closing facebook broswer...");
-            await new Promise(res => setTimeout(res, 120000));
+            console.log("Closing Facebook broswer...");
+            await new Promise(res => setTimeout(res, 70000));
             await context.close();
         } catch (error) {
             console.error("Error during cleanup:", error);

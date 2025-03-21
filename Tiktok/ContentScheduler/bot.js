@@ -90,7 +90,7 @@ async function runBot() {
             console.log("Launching new browser context...");
             
             context = await chromium.launchPersistentContext(userDataDir, {
-                headless: true,
+                headless: false,
                 channel: 'chrome',
                 executablePath,  // Dynamic executable path
                 args: [
@@ -232,7 +232,7 @@ async function runBot() {
     }
 
     if (context) {
-        console.log("closing browser...");
+        console.log("Closing Tiktok browser...");
         await new Promise(res => setTimeout(res, 70000));
         await context.close();
     }

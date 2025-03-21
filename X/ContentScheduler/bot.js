@@ -94,7 +94,7 @@ async function runBot() {
         
         const executablePath = getChromeExecutablePath();
         context = await chromium.launchPersistentContext(chromeProfilePath, { 
-            headless: true, 
+            headless: false, 
             channel: 'chrome',
             executablePath,
             args: [
@@ -224,9 +224,7 @@ async function runBot() {
             await page.reload();
             try {
                 console.log("Waiting for page to load...");
-                await page.waitForLoadState('domcontentloaded', { timeout: 60000 });
-                console.log("DOM content loaded, waiting for network to stabilize...");
-                await page.waitForLoadState('networkidle', { timeout: 60000 });
+                await page.waitForTimeout(15000);
             } catch (loadError) {
                 console.log("Page load timed out, but continuing anyway...");
                 await page.waitForTimeout(15000);
@@ -246,7 +244,7 @@ async function runBot() {
 
     if (context) {
         console.log("Closing X broswer...");
-            await new Promise(res => setTimeout(res, 120000));
+            await new Promise(res => setTimeout(res, 50000));
         await context.close();
     }
 }

@@ -186,7 +186,7 @@ async function runBot() {
         
         const executablePath = getChromeExecutablePath();
         context = await chromium.launchPersistentContext(chromeProfilePath, { 
-            headless: true, 
+            headless: false, 
             channel: 'chrome',
             executablePath,
             args: [
@@ -271,7 +271,7 @@ async function runBot() {
     // Close browser context
     if (context) {
         console.log("Closing Linkedin broswer...");
-            await new Promise(res => setTimeout(res, 120000));
+            await new Promise(res => setTimeout(res, 70000));
         await context.close();
     }
 }
