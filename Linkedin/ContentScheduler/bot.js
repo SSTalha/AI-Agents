@@ -186,7 +186,7 @@ async function runBot() {
         
         const executablePath = getChromeExecutablePath();
         context = await chromium.launchPersistentContext(chromeProfilePath, { 
-            headless: false, 
+            headless: true, 
             channel: 'chrome',
             executablePath,
             args: [
