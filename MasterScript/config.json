@@ -46,7 +46,7 @@
       "email": "alicheema.omni@gmail.com"
     },
     "ContentScheduler": {
-      "enabled": true,
+      "enabled": false,
       "config": [
           {
             "filePath": "C:\\Users\\Talha\\Desktop\\sample\\luffy.jpeg",
