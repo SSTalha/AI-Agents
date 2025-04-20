@@ -164,7 +164,7 @@ async function createPost(page, post) {
     console.log("Creating new post...");
     
     try {
-        // Wait for and click the post creation button with updated selector
+        // Wait for and click the post creation button
         const writeButtonSelector = 'div[role="button"] span:has-text("Write something...")';
         await page.waitForSelector(writeButtonSelector, { timeout: 30000 });
         await randomDelay();
@@ -174,83 +174,81 @@ async function createPost(page, post) {
         console.log("Waiting for post modal to load...");
         await randomDelay(5000, 10000);
 
-         // If we have an image to upload
-    if (filePath) {
-        console.log("Preparing to upload image...");
-        
-        // Click "Add to your post"
-        await page.waitForSelector('div[aria-label="Add to your post"]');
-        await randomDelay();
-        // await page.click('div[aria-label="Add to your post"]');
-        
-        // Click Photo/video button
-        await page.waitForSelector('div[aria-label="Photo/video"]');
-        await randomDelay();
-        await page.click('div[aria-label="Photo/video"]');
-        
-        // Wait for file input and upload image
-        try {
-            console.log("Uploading image...");
-            const absoluteImagePath = path.resolve(filePath);
+        if (filePath) {
+            console.log("Preparing to upload image...");
             
-            // Look for file input
-            const fileInputElement = await page.$('input[type="file"]');
-            if (fileInputElement) {
-                // If direct file input is not found, try file chooser event
-                const [fileChooser] = await Promise.all([
-                    page.waitForEvent('filechooser'),
-                    page.click('div[aria-label="Photo/video"]')
-                ]);
-                console.log("image2");
-                await randomDelay();
-                await fileChooser.setFiles(absoluteImagePath);
-            } 
+            // Click "Add to your post"
+            await page.waitForSelector('div[aria-label="Add to your post"]');
+            await randomDelay();
+            // await page.click('div[aria-label="Add to your post"]');
             
-            console.log("Image uploaded successfully");
-            await randomDelay(5000, 10000); // Wait for image to upload
-        } catch (error) {
-            console.error("Error uploading image:", error);
-            throw error;
+            // Click Photo/video button
+            await page.waitForSelector('div[aria-label="Photo/video"]');
+            await randomDelay();
+            await page.click('div[aria-label="Photo/video"]');
+            
+            // Wait for file input and upload image
+            try {
+                console.log("Uploading image...");
+                const absoluteImagePath = path.resolve(filePath);
+                
+                // Look for file input
+                const fileInputElement = await page.$('input[type="file"]');
+                if (fileInputElement) {
+                    // If direct file input is not found, try file chooser event
+                    const [fileChooser] = await Promise.all([
+                        page.waitForEvent('filechooser'),
+                        page.click('div[aria-label="Photo/video"]')
+                    ]);
+                    console.log("image2");
+                    await randomDelay();
+                    await fileChooser.setFiles(absoluteImagePath);
+                } 
+                
+                console.log("Image uploaded successfully");
+                await randomDelay(5000, 10000); // Wait for image to upload
+            } catch (error) {
+                console.error("Error uploading image:", error);
+                throw error;
+            }
         }
-    }
         
-        // Type content with human-like delays
-        const textboxSelector = 'div[aria-label="Create a public post…"][contenteditable="true"][role="textbox"]';
+        // Updated selector and handling for the caption textbox
+        const textboxSelector = 'div[contenteditable="true"][role="textbox"][data-lexical-editor="true"]:not([aria-label="Create a public post…"])';
         try {
             await page.waitForSelector(textboxSelector, { timeout: 60000 });
             console.log("Found post modal textbox");
             await page.waitForTimeout(2000);
-            await page.click(textboxSelector);
+            
+            // Use evaluate to ensure we click the correct element
+            await page.evaluate((selector) => {
+                const elements = document.querySelectorAll(selector);
+                for (const element of elements) {
+                    if (element.getAttribute('aria-placeholder') === 'Create a public post…') {
+                        element.click();
+                        return;
+                    }
+                }
+            }, textboxSelector);
+
+            // Type the caption using keyboard press
+            await page.keyboard.type(caption, { delay: 100 });
+            
         } catch (error) {
             console.error("Error waiting for textbox:", error);
             throw error;
         }
 
+        await randomDelay();
 
-        // // Clear any existing content first
-        // await page.evaluate((selector) => {
-        //     const element = document.querySelector(selector);
-        //     if (element) element.innerHTML = '';
-        // }, textboxSelector);
-
-        // Type content with human-like delays
-        for (const char of caption.split('')) {
-            await page.type(textboxSelector, char);
-            await new Promise(resolve => setTimeout(resolve, Math.random() * 300));
-        }
+        // Click post button with updated selector
+        const postButtonSelector = 'div[aria-label="Post"][role="button"]';
+        await page.waitForSelector(postButtonSelector, { timeout: 30000 });
+        await page.click(postButtonSelector);
+        console.log("Post created successfully!");
         
-      
-
-    await randomDelay();
-
-    // Click post button with simplified selector
-    const postButtonSelector = 'div[aria-label="Post"][role="button"]';
-    await page.waitForSelector(postButtonSelector, { timeout: 30000 });
-    await page.click(postButtonSelector);
-    console.log("Post created successfully!");
-    
-    // Wait for post to complete
-    await randomDelay(8000, 12000);
+        // Wait for post to complete
+        await randomDelay(8000, 12000);
     } catch (error) {
         console.error("Error in createPost:", error);
         throw error;

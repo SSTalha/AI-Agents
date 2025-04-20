@@ -1,6 +1,6 @@
 {
   "facebook": {
-    "browser_profile_name": "Profile 17",
+    "browser_profile_name": "Profile 5",
     "credentials": {
         "username": "alicheema.omni@gmail.com",
         "password": "ali.omni@cheema"
@@ -9,14 +9,9 @@
         "enabled": true,
         "config": [
             {
-                "postTime": "2025-03-21 15:00",
+                "postTime": "2025-04-20 20:00",
                 "caption": "very funny",
-                "filePath":  "C:\\Users\\Talha\\Desktop\\sample\\video2.mp4"
-            },
-            {
-              "postTime": "2025-02-16 05:10",
-              "caption": "",
-              "filePath":  "C:\\Users\\Talha\\Desktop\\sample\\video1.mp4"
+                "filePath":  "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\mile.png"
             }
         ]
     }
