@@ -2,16 +2,16 @@
   "facebook": {
     "browser_profile_name": "Profile 5",
     "credentials": {
-        "username": "alicheema.omni@gmail.com",
-        "password": "ali.omni@cheema"
+        "username": "alichee",
+        "password": "ali.o"
     },
     "ContentScheduler": {
         "enabled": true,
         "config": [
             {
                 "postTime": "2025-04-20 20:00",
-                "caption": "very funny",
-                "filePath":  "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\mile.png"
+                "caption": "hahahah",
+                "filePath":  "C:\\Users\\Haroon\\OneDrive\\Desktop\\sample\\car.jpg"
             }
         ]
     }
@@ -19,8 +19,8 @@
   "instagram": {
     "browser_profile_name": "Profile 17",
     "credentials": {
-          "username": "J__Paul_Brandout",
-          "password": "limo@insta.acc"
+          "username": "aul",
+          "password": "limo@"
     },
     "ContentScheduler": {
           "enabled": false,
@@ -41,9 +41,9 @@
   "x": {
     "browser_profile_name": "Profile 17",
     "credentials": {
-      "username": "noty_mankind",
-      "password": "cheema.omni@001",
-      "email": "alicheema.omni@gmail.com"
+      "username": "nd",
+      "password": "ch1",
+      "email": "alicil.com"
     },
     "ContentScheduler": {
       "enabled": false,
@@ -64,8 +64,8 @@
   "linkedin": {
     "browser_profile_name": "Profile 2",
     "credentials": {
-        "username": "syedali.ahsan7654321@gmail.com",
-        "password": "Link@1232"
+        "username": "syed",
+        "password": "Li2"
     },
     "ContentScheduler": {
         "enabled": false,
@@ -81,8 +81,8 @@
   "tiktok": {
     "browser_profile_name": "Profile 17",
     "credentials": {
-      "username": "limo.service788@gmail.com",
-      "password": "limo.tik@tok.788"
+      "username": "lim",
+      "password": "li.788"
     },
     "ContentScheduler": {
       "enabled": false,
