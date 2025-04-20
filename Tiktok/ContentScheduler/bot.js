@@ -90,7 +90,7 @@ async function runBot() {
             console.log("Launching new browser context...");
             
             context = await chromium.launchPersistentContext(userDataDir, {
-                headless: false,
+                headless: true,
                 channel: 'chrome',
                 executablePath,  // Dynamic executable path
                 args: [

@@ -70,7 +70,7 @@ const launchBrowser = async (config) => {
         console.log("Launching new browser context...");
         
         context = await chromium.launchPersistentContext(userDataDir, {
-            headless: false,
+            headless: true,
             channel: 'chrome',
             executablePath,
             args: [
